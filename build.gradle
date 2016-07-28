@@ -1,0 +1,103 @@
+// Dependencies for the buildscript (not the program)
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter() // for shadow plugin
+    }
+}
+
+plugins {
+    id "java"
+    id "application"
+    id "jacoco"
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id "com.github.kt3k.coveralls" version "2.6.3"
+}
+
+apply from: 'gradle/jacoco.coverage.gradle'
+
+// No Windows support
+startScripts {
+    doLast {
+        delete windowsScript
+    }
+}
+
+group = 'org.magicdgs'
+version = '0.0.0-SNAPSHOT'
+description = """Tools for Haploid/Haplotype VCFs"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+mainClassName = group + "." + rootProject.name + ".Main"
+
+repositories {
+    mavenCentral()
+    // TODO: Broad Institute artifactory should be removed when GATK4 is in Maven Central
+    maven {
+        url "https://artifactory.broadinstitute.org/artifactory/libs-snapshot/" 
+    }
+}
+
+dependencies {
+    // TODO: they will do soon a master-SNAPSHOT, which we will use in the future (gatk/issue#1995)
+    compile group: 'org.broadinstitute', name: 'gatk', version: '4.alpha.1-225-g796497f-SNAPSHOT'
+    testCompile 'org.testng:testng:6.9.10'
+}
+
+// for managing the wrapper task
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
+}
+
+// test task
+tasks.withType(Test) {
+
+    // tests could be always re-run
+    outputs.upToDateWhen { false }
+
+    // enable TestNG support (default is JUnit)
+    useTestNG()
+
+    // TODO: set a system property for the test JVM(s)
+    // TODO: example -> systemProperty 'some.prop', 'value'
+
+    // show the stdout/stderr of the test JVM(s) on the console
+    testLogging.showStandardStreams = true
+
+    // set heap size for the test JVM(s)
+    minHeapSize = "1G"
+    maxHeapSize = "2G"
+
+    // TODO: set JVM arguments for the test JVM(s)
+    // TODO: example -> jvmArgs '-XX:MaxPermSize=256m'
+
+    // log the test that is running
+    beforeTest { descriptor ->
+        logger.lifecycle("Running Test: " +  descriptor)
+    }
+
+    // listen to standarrd out and standard error of the test JVM(s)
+    def testOutput = ""
+    onOutput { descriptor, event ->
+        logger.lifecycle("Test: " + descriptor + " standard out/err -> " + event.message)
+    }
+
+    // logging after the tests
+    testLogging {
+        testLogging {
+            events "skipped", "failed"
+            exceptionFormat = "full"
+        }
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                println "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            }
+        }
+    }
+}
+
+shadowJar {
+    zip64 true
+}

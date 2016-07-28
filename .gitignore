@@ -1,0 +1,32 @@
+# Java Files
+*.class
+
+# Java VM crash logs
+hs_err_pid*
+
+# Git
+*~
+
+# InteliJ
+*.iml
+.idea*
+
+# Eclipse
+.settings
+.project
+.classpath
+
+## Build paths
+bin/
+target/
+build/
+/.gradle/
+
+# OSX
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temp files should be stored in tmp folder
+tmp/
+
