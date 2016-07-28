@@ -39,7 +39,8 @@ import java.util.stream.Collectors;
 
 /**
  * Function that converts a {@link Genotype} with a diploid individual into haploid. When a {@link
- * Genotype} with an already haploid individual is feed into the function, a new copy of the variant
+ * Genotype} with an already haploid individual is feed into the function, a new copy of the
+ * variant
  * will be returned.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
@@ -61,9 +62,16 @@ public interface HaplotypeConverter extends Function<Genotype, Genotype> {
      * Get a function to map a {@link VariantContext} with haploid/diploids to a {@link
      * VariantContext} with haplotypes, using the provided {@link HaplotypeConverter}
      */
-    public static Function<VariantContext, VariantContext> getVariantConverter(
+    public static VariantHaplotypeConverter getVariantConverter(
             final HaplotypeConverter converter) {
-        return new Function<VariantContext, VariantContext>() {
+        return new VariantHaplotypeConverter() {
+
+            @Override
+            public void log(final Logger logger) {
+                converter.log(logger);
+
+            }
+
             @Override
             public VariantContext apply(final VariantContext variant) {
                 Utils.nonNull(variant);

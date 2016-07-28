@@ -45,8 +45,8 @@ public class Main {
      */
     protected static List<String> getPackageList() {
         final List<String> packageList = new ArrayList<>();
-        // TODO: remove hellbender tools
-        packageList.add("org.broadinstitute.hellbender");
+        // TODO: add some of the bundle tools like IndexFeatureFile
+        // packageList.add("org.broadinstitute.hellbender");
         packageList.add("org.magicdgs.thaplv.tools");
         return packageList;
     }
@@ -55,8 +55,6 @@ public class Main {
      * Entry point for thaplv.
      */
     public static void main(final String[] args) {
-        System.out.println(
-                "This is a clone for GATK4 command line and should not be taken as a thaplv distribution yet");
         try {
             Object result = new Main().instanceMain(args);
             if (result != null) {

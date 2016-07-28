@@ -28,8 +28,8 @@
 package org.magicdgs.thaplv.haplotypes.model;
 
 import htsjdk.variant.variantcontext.VariantContext;
-
-import java.util.function.Function;
+import org.apache.logging.log4j.Logger;
+import org.broadinstitute.hellbender.utils.Utils;
 
 /**
  * Haplotype model that stores information for converting {@link htsjdk.variant.variantcontext.Genotype}
@@ -42,20 +42,20 @@ public enum HaplotypeModel {
     INBRED_LINE(new InbredLine(1), new InbredLine(2)),
     HAPLOID(INBRED_LINE.haploid, INBRED_LINE.diploid),
     BACK_CROSS(new BackCross(1), new BackCross(2)),
-    DONT_CHECK(v -> v, v -> v);
+    DONT_CHECK(DontCheckHaplotypeConverter.SINGLETON, DontCheckHaplotypeConverter.SINGLETON);
 
     // return haploid haplotypes
-    private final Function<VariantContext, VariantContext> haploid;
+    private final VariantHaplotypeConverter haploid;
     // return diploid haplotypes
-    private final Function<VariantContext, VariantContext> diploid;
+    private final VariantHaplotypeConverter diploid;
 
     HaplotypeModel(final HaplotypeConverter haploid, final HaplotypeConverter diploid) {
         this.haploid = HaplotypeConverter.getVariantConverter(haploid);
         this.diploid = HaplotypeConverter.getVariantConverter(diploid);
     }
 
-    HaplotypeModel(final Function<VariantContext, VariantContext> haploid,
-            final Function<VariantContext, VariantContext> diploid) {
+    HaplotypeModel(final VariantHaplotypeConverter haploid,
+            final VariantHaplotypeConverter diploid) {
         this.haploid = haploid;
         this.diploid = diploid;
     }
@@ -63,8 +63,9 @@ public enum HaplotypeModel {
     /**
      * Get the converter for a variant for this model. Only haploid/diploids are allowed
      */
-    public static Function<VariantContext, VariantContext> getVariantConverter(
+    public static VariantHaplotypeConverter getVariantHaplotypeConverter(
             final HaplotypeModel model, final int ploidy) {
+        Utils.nonNull(model, "null model");
         switch (ploidy) {
             case 1:
                 return model.haploid;
@@ -75,4 +76,25 @@ public enum HaplotypeModel {
         }
     }
 
+    /**
+     * {@link VariantHaplotypeConverter} for don't check genotypes
+     */
+    private static final class DontCheckHaplotypeConverter implements VariantHaplotypeConverter {
+
+        /** Use always the singleton for avoid constructing new objects */
+        private final static DontCheckHaplotypeConverter SINGLETON =
+                new DontCheckHaplotypeConverter();
+
+        @Override
+        public void log(final Logger logger) {
+            logger.info("Genotypes won't be checked for haploid state.");
+            logger.warn("Not checking genotypes is discouraged if the haplotypes were obtained with diploid callers or not converted before.");
+            logger.warn("Most of the tools assume haploid individuals (only the first allele in the Genotypes is considered) and results could be wrong if they are not.");
+        }
+
+        @Override
+        public VariantContext apply(final VariantContext variant) {
+            return variant;
+        }
+    }
 }
