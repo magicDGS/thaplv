@@ -1,0 +1,14 @@
+language: java
+
+jdk:
+    - oraclejdk8
+
+install:
+    - ./gradlew shadowJar
+
+script:
+    - ./gradlew jacocoTestReport
+
+after_success:
+    - ./gradlew coveralls
+    - python <(curl -s https://raw.githubusercontent.com/TouK/sputnik-ci/master/sputnik-ci.py)
