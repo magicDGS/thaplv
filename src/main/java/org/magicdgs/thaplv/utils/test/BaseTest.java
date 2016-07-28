@@ -28,10 +28,12 @@
 package org.magicdgs.thaplv.utils.test;
 
 import htsjdk.samtools.util.Log;
+import htsjdk.variant.variantcontext.Genotype;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.utils.LoggingUtils;
 import org.broadinstitute.hellbender.utils.io.IOUtils;
+import org.testng.Assert;
 import org.testng.Reporter;
 import org.testng.annotations.BeforeSuite;
 
@@ -133,5 +135,47 @@ public abstract class BaseTest {
         } else {
             return getClass().getSimpleName().replaceAll("Test$", "");
         }
+    }
+
+    /**
+     * Assert that two genotypes are equals
+     *
+     * @param actual      the actual genotype
+     * @param expected    the expected genotype
+     * @param ignorePhase if {@code true} phasing will be ignored when comparing haplotypes
+     * @param msg         message to pass if the test fails
+     */
+    public static void assertGenotypesEquals(final Genotype actual, final Genotype expected,
+            final boolean ignorePhase, final String msg) {
+        if (!expected.sameGenotype(actual, ignorePhase)) {
+            String formatted = "";
+            if (null != msg) {
+                formatted = msg + " ";
+            }
+            formatted = formatted + "expected [" + expected + "] but found [" + actual + "]";
+            Assert.fail(formatted);
+        }
+    }
+
+    /**
+     * Assert that two genotypes are equals
+     *
+     * @param actual      the actual genotype
+     * @param expected    the expected genotype
+     * @param ignorePhase if {@code true} phasing will be ignored when comparing haplotypes
+     */
+    public static void assertGenotypesEquals(final Genotype actual, final Genotype expected,
+            final boolean ignorePhase) {
+        assertGenotypesEquals(actual, expected, ignorePhase, null);
+    }
+
+    /**
+     * Assert that two genotypes are equals, ignoring the phase
+     *
+     * @param actual   the actual genotype
+     * @param expected the expected genotype
+     */
+    public static void assertGenotypesEquals(final Genotype actual, final Genotype expected) {
+        assertGenotypesEquals(actual, expected, false);
     }
 }
