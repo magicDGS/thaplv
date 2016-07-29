@@ -65,3 +65,7 @@ for logging.
 
 Licensed under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 See [LICENSE.txt](https://github.com/magicDGS/thaplv/blob/master/LICENSE.txt) file.
+
+The [GATK4 framework](https://github.com/broadinstitute/gatk) is also licensed under the
+[BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+See their [LICENSE.tx](https://github.com/broadinstitute/gatk/blob/master/LICENSE.TXT) file for more information.
