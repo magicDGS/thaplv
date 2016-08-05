@@ -47,7 +47,7 @@ public class Main {
         final List<String> packageList = new ArrayList<>();
         // TODO: remove hellbender tools
         packageList.add("org.broadinstitute.hellbender");
-        packageList.add("org.magicdgs.patok.tools");
+        packageList.add("org.magicdgs.thaplv.tools");
         return packageList;
     }
 
