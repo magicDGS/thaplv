@@ -48,6 +48,38 @@ public class AlleleUtilsUnitTest extends BaseTest {
     private static final Allele altT = Allele.create("T", false);
     private static final Allele altC = Allele.create("C", false);
 
+    @DataProvider(name = "scaledDifferences")
+    public Object[][] getScaledDifferencesData() {
+        return new Object[][] {
+                // equal alleles
+                {refA, refA, 0},
+                {altC, altC, 0},
+                {refA, Allele.create(refA, false), 0},
+                {altT, Allele.create(altT, true), 0},
+                // different alleles
+                {refA, altC, 2},
+                {altT, refA, 2},
+                {altC, altT, 2},
+                // no-calls involved
+                {Allele.NO_CALL, Allele.NO_CALL, 1},
+                {Allele.NO_CALL, refA, 1},
+                {Allele.NO_CALL, altT, 1},
+                {refA, Allele.NO_CALL, 1},
+                {altC, Allele.NO_CALL, 1}
+
+        };
+    }
+
+    @Test(dataProvider = "scaledDifferences")
+    public void testScaledDifferences(final Allele al1, final Allele al2, final int scaledDiff) {
+        Assert.assertEquals(AlleleUtils.scaledDifference(al1, al2), scaledDiff);
+    }
+
+    @Test(dataProvider = "scaledDifferences")
+    public void testDifferences(final Allele al1, final Allele al2, final double scaledDiff) {
+        Assert.assertEquals(AlleleUtils.difference(al1, al2), scaledDiff/2);
+    }
+
     @DataProvider(name = "allelesToCount")
     public Object[][] getAlleleCountData() {
         return new Object[][] {
