@@ -82,7 +82,8 @@ public abstract class BaseTest {
 
     /** Returns the location of the resource directory for the tested class */
     public String getTestDataDir() {
-        return TEST_ROOT_FILE_DIRECTORY + this.getClass().getPackage().getName().replace(".", "/")
+        return TEST_ROOT_FILE_DIRECTORY + "/"
+                + this.getClass().getPackage().getName().replace(".", "/")
                 + "/" + getTestedClassName() + "/";
     }
 
