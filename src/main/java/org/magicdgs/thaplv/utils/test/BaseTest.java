@@ -69,8 +69,8 @@ public abstract class BaseTest {
     private static final String CURRENT_DIRECTORY = System.getProperty("user.dir");
 
     // directory for all test files
-    private static final String TEST_ROOT_FILE_DIRECTORY =
-            new File(CURRENT_DIRECTORY, "src/test/resources/").getAbsolutePath();
+    public static final String TEST_ROOT_FILE_DIRECTORY =
+            new File(CURRENT_DIRECTORY, "src/test/resources/").getAbsolutePath() + "/";
 
     /** Log this message so that it shows up inline during output as well as in html reports */
     public static void log(final String message) {
@@ -86,6 +86,10 @@ public abstract class BaseTest {
                 + this.getClass().getPackage().getName().replace(".", "/")
                 + "/" + getTestedClassName() + "/";
     }
+
+    /** Reference genome from the D. simulans chromosome arm 2L */
+    public static final File DROSOPHILA_SIMULANS_2L_REFERENCE =
+            new File(TEST_ROOT_FILE_DIRECTORY + "org/magicdgs/thaplv/drosophila.2L.fa");
 
     /**
      * Get a test file resolved using {@link #getTestDataDir()} as the parent
