@@ -25,29 +25,22 @@
  *
  */
 
-package org.magicdgs.thaplv.cmd;
+package org.magicdgs.thaplv.cmd.programgroups;
+
+import org.broadinstitute.hellbender.cmdline.CommandLineProgramGroup;
 
 /**
- * Argument definitions for thaplv tools
- *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-public class ThaplvArgumentDefinitions {
+public class AnalysisProgramGroup implements CommandLineProgramGroup {
 
-    private ThaplvArgumentDefinitions() {}
+    @Override
+    public String getName() {
+        return "Haplotype analysis";
+    }
 
-    public final static String HAPLOTYPE_MODEL_LONG = "haplotypeModel";
-    public final static String HAPLOTYPE_MODEL_SHORT = "H";
-
-    public final static String OUTPUT_PLOIDY_LONG = "outputPloidy";
-    public final static String OUTPUT_PLOIDY_SHORT = "ploidy";
-
-    public final static String ONLY_POLYMORPHIC_LONG = "onlyPolymorphic";
-    public final static String ONLY_POLYMORPHIC_SHORT = "polymorphic";
-
-    public final static String WINDOW_SIZE_LONG = "widow-size";
-    public final static String WINDOW_SIZE_SHORT = "ws";
-    public final static String WINDOW_STEP_LONG = "window-step-size";
-    public final static String WINDOW_STEP_SHORT = "ss";
-
+    @Override
+    public String getDescription() {
+        return "Analysis for haplotype/haploid individuals";
+    }
 }
