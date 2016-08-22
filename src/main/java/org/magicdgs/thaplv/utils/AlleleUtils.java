@@ -47,6 +47,37 @@ public class AlleleUtils {
     private AlleleUtils() { }
 
     /**
+     * Get the difference value between two alleles (scaled by a factor of 2)
+     *
+     * @param allele1 the first allele
+     * @param allele2 the second allele
+     *
+     * @return 1 if they are missing, 0 if they are equals, 2 otherwise
+     */
+    public static int scaledDifference(final Allele allele1, final Allele allele2) {
+        if (allele1.isNoCall() || allele2.isNoCall()) {
+            return 1;
+        } else if (allele1.equals(allele2)) {
+            return 0;
+        } else {
+            return 2;
+        }
+    }
+
+    /**
+     * Get the difference value between two alleles
+     *
+     * @param allele1 the first allele
+     * @param allele2 the second allele
+     *
+     * @return 0 if they are equals, 0.5 if one of them is missing, 1 otherwise
+     */
+    public static double difference(Allele allele1, Allele allele2) {
+        final int diff = scaledDifference(allele1, allele2);
+        return (diff == 0) ? 0 : diff / 2d;
+    }
+
+    /**
      * Get the allele counts from an allele stream
      *
      * @param alleles       alleles to count
