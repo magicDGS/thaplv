@@ -42,7 +42,7 @@ repositories {
 
 dependencies {
     // TODO: they will do soon a master-SNAPSHOT, which we will use in the future (gatk/issue#1995)
-    compile group: 'org.broadinstitute', name: 'gatk', version: '4.alpha.1-225-g796497f-SNAPSHOT'
+    compile group: 'org.broadinstitute', name: 'gatk', version: '4.alpha.2-2-g91f63f6-SNAPSHOT'
     testCompile 'org.testng:testng:6.9.10'
 }
 
