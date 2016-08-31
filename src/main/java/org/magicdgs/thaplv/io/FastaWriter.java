@@ -44,7 +44,7 @@ import java.io.PrintStream;
  * then adding the bases one by one with {@link #addBase(byte)}. After adding the sequence,
  * {@link #endSequence()} should be called before write a new sequence.
  *
- * @author Daniel Gómez-Sánchez
+ * @author Daniel Gomez-Sanchez (magicDGS)
  */
 public class FastaWriter implements Closeable {
 
