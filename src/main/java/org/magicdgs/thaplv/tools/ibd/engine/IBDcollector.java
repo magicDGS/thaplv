@@ -38,6 +38,10 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Collector for variants to compute IBD.
@@ -67,6 +71,11 @@ public class IBDcollector {
     // cached maximum number of windows in RAM
     private final int maximumWindow;
 
+    private final BiConsumer<PairwiseDifferencesWindow, VariantContext> function;
+
+    /** Creator for the windows using the contig and the start. */
+    private final BiFunction<String, Integer, PairwiseDifferencesWindow> windowsCreator;
+
     /**
      * New IBD collector for the samples in a VCF header
      *
@@ -85,8 +94,39 @@ public class IBDcollector {
         this.windowSize = windowSize;
         this.windowStep = windowStep;
         // compute the cached number of windows
-        this.maximumWindow = (int) (Math.floor(windowSize / windowStep)) - 1;
+        this.maximumWindow = computeMaximumNumberOfWindows(windowSize, windowStep);
         this.queue = new LinkedList<>();
+        this.function = PairwiseDifferencesWindow::addVariant;
+        this.windowsCreator = (contig, start) -> new PairwiseDifferencesWindow(contig, start,
+                start + this.windowSize, sampleNames, this.nCounter);
+    }
+
+    /**
+     * New IBD collector for the reference comparison
+     *
+     * @param sampleNames the name of the samples to include
+     * @param nCounter   the class for count the Ns in the reference
+     * @param windowSize the window size
+     * @param windowStep the window step
+     */
+    public IBDcollector(final List<String> sampleNames, final FastaNsCounter nCounter, final int windowSize,  final int windowStep) {
+        Utils.nonNull(nCounter, "null nCounter");
+        Utils.nonNull(nCounter.getDictionary(), "null nCounter dictionary");
+        this.sampleNames = sampleNames;
+        this.nCounter = nCounter;
+        this.windowSize = windowSize;
+        this.windowStep = windowStep;
+        // compute the cached number of windows
+        this.maximumWindow = computeMaximumNumberOfWindows(windowSize, windowStep);
+        this.queue = new LinkedList<>();
+        this.function = PairwiseDifferencesWindow::addVariantReferenceComparison;
+        this.windowsCreator = (contig, start) -> new PairwiseDifferencesWindow(contig, start,
+                start + this.windowSize, "Reference", sampleNames, this.nCounter);
+    }
+
+    /** Compute the cached number of windows. */
+    private static int computeMaximumNumberOfWindows(final int windowSize, final int windowStep) {
+        return (int) (Math.floor(windowSize / windowStep)) - 1;
     }
 
     /**
@@ -169,9 +209,7 @@ public class IBDcollector {
      * Add the variant to the loaded queue
      */
     private void addVariantToQueue(final VariantContext variant) {
-        for (final PairwiseDifferencesWindow win : queue) {
-            win.addVariant(variant);
-        }
+        queue.stream().forEach(win -> function.accept(win, variant));
     }
 
     /**
@@ -201,8 +239,7 @@ public class IBDcollector {
                 logger.debug("Could not create more windows after {}", lastWindow.getInterval());
                 break;
             }
-            queue.add(new PairwiseDifferencesWindow(contig, i, i + windowSize, sampleNames,
-                    nCounter));
+            queue.add(windowsCreator.apply(contig, i));
         }
     }
 }

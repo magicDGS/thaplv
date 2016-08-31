@@ -24,6 +24,7 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
 package org.magicdgs.thaplv.tools.ibd;
 
 import org.magicdgs.thaplv.cmd.programgroups.AnalysisProgramGroup;
@@ -37,18 +38,18 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 /**
- * Tool for computing IBD regions
+ * Tool for compute IBD regions against a reference.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
 @CommandLineProgramProperties(
         summary =
-                "Identify identity-by-descent (IBD) regions using the approach described in Langley et. al 2012, Genetics 192(2). "
-                        + "Pairwise differences between individuals are computed in windows, and called as IBD tracks if the "
+                "Identify identity-by-descent (IBD) regions for the reference using the approach described in Langley et. al 2012, Genetics 192(2). "
+                        + "Differences between individuals and the reference (from the VCF reference allele) are computed in windows, and called as IBD tracks if the "
                         + "differences per site are smaller than a threshold.",
-        oneLineSummary = "Compute IBD regions using pair-wise differences between individuals.",
+        oneLineSummary = "Compute reference similarity (IBD regions w.r.t. reference) using the number of differences.",
         programGroup = AnalysisProgramGroup.class)
-public final class IBDcompute extends IBDTool {
+public final class ReferenceSimilarity extends IBDTool {
 
     @Override
     protected IBDcollector getIBDcollector() {
@@ -60,7 +61,7 @@ public final class IBDcompute extends IBDTool {
                     new File(referenceArguments.getReferenceFileName() + ".fai"),
                     referenceArguments.getReferenceFile());
         }
-        return new IBDcollector(header, nCounter,
+        return new IBDcollector(header.getSampleNamesInOrder(), nCounter,
                 slidingWindowArgumentCollection.windowSize,
                 slidingWindowArgumentCollection.stepSize);
     }
