@@ -27,8 +27,8 @@
 
 package org.magicdgs.thaplv.tools;
 
+import org.magicdgs.thaplv.utils.test.CommandLineProgramTest;
 
-import org.broadinstitute.hellbender.CommandLineProgramTest;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.test.IntegrationTestSpec;
 import org.testng.annotations.Test;

@@ -44,7 +44,6 @@ import org.broadinstitute.hellbender.engine.ReadsContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.engine.filters.VariantFilter;
 import org.broadinstitute.hellbender.engine.filters.VariantFilterLibrary;
-import org.broadinstitute.hellbender.utils.variant.GATKVariantContextUtils;
 
 import java.io.File;
 
@@ -97,8 +96,7 @@ public final class ConvertHaplotypes extends HaploidWalker {
         // Initialize VCF header lines
         final VCFHeader header = getHeaderForVariants();
         header.addMetaDataLine(new VCFHeaderLine("source", this.getClass().getSimpleName()));
-        vcfWriter = GATKVariantContextUtils
-                .createVCFWriter(outFile, getBestAvailableSequenceDictionary(), false);
+        vcfWriter = createVCFWriter(outFile);
         vcfWriter.writeHeader(header);
     }
 
