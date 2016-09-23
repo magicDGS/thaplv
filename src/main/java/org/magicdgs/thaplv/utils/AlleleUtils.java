@@ -88,7 +88,7 @@ public class AlleleUtils {
      */
     public static final Map<Allele, Integer> getAlleleCounts(final Stream<Allele> alleles,
             final boolean includeNoCall) {
-        final HashMap<Allele, Integer> alleleCounts = new HashMap<>();
+        final Map<Allele, Integer> alleleCounts = new HashMap<>();
         alleles.filter(a -> includeNoCall || a.isCalled()) // filter the no called
                 .forEach(al -> alleleCounts.merge(al, 1, Integer::sum));
         return alleleCounts;
@@ -104,7 +104,7 @@ public class AlleleUtils {
      */
     public static final Map<Allele, Double> getAlleleFrequencies(final Stream<Allele> alleles,
             final boolean includeNoCall) {
-        final HashMap<Allele, Double> alleleFreqs = new HashMap<>();
+        final Map<Allele, Double> alleleFreqs = new HashMap<>();
         final int total = (int) alleles
                 .filter(a -> includeNoCall || a.isCalled()) // filter the no called
                 .map(al -> alleleFreqs.merge(al, 1d, Double::sum)) // update the map
