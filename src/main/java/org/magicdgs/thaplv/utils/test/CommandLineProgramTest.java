@@ -25,24 +25,29 @@
  *
  */
 
-package org.magicdgs.thaplv;
+package org.magicdgs.thaplv.utils.test;
 
-import org.magicdgs.thaplv.utils.test.CommandLineProgramTest;
+import org.magicdgs.thaplv.Main;
 
-import org.broadinstitute.hellbender.exceptions.UserException;
-import org.testng.annotations.Test;
+import org.broadinstitute.hellbender.utils.test.CommandLineProgramTester;
+
+import java.util.List;
 
 /**
- * Simple test for the command line exception by the user
+ * Class for testing THaplV tools using {@link org.broadinstitute.hellbender.utils.test.IntegrationTestSpec}.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-public class MainTest extends CommandLineProgramTest {
+public class CommandLineProgramTest extends BaseTest implements CommandLineProgramTester {
 
-    @Test(expectedExceptions = UserException.class)
-    public void testCommandNotFoundThrows() {
-        // test if it is recognized the unknown tool
-        this.runCommandLine(new String[] {"UnknownTool"});
+    @Override
+    public String getTestedToolName() {
+        return getTestedClassName();
     }
 
+    /** Use our main class. */
+    @Override
+    public Object runCommandLine(final List<String> args) {
+        return new Main().instanceMain(makeCommandLineArgs(args));
+    }
 }

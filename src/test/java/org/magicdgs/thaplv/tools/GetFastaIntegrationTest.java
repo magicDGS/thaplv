@@ -30,8 +30,8 @@ package org.magicdgs.thaplv.tools;
 
 import org.magicdgs.thaplv.cmd.ThaplvArgumentDefinitions;
 import org.magicdgs.thaplv.utils.test.BaseTest;
+import org.magicdgs.thaplv.utils.test.CommandLineProgramTest;
 
-import org.broadinstitute.hellbender.CommandLineProgramTest;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.utils.test.ArgumentsBuilder;
 import org.broadinstitute.hellbender.utils.test.IntegrationTestSpec;
