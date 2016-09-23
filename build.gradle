@@ -58,7 +58,7 @@ dependencies {
 
 // for managing the wrapper task
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.13'
+    gradleVersion = '3.1'
 }
 
 // test task
