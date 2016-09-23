@@ -32,7 +32,6 @@ import org.magicdgs.thaplv.utils.test.BaseTest;
 
 import org.broadinstitute.hellbender.CommandLineProgramTest;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
-import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.test.ArgumentsBuilder;
 import org.broadinstitute.hellbender.utils.test.IntegrationTestSpec;
 import org.testng.Assert;
@@ -43,28 +42,22 @@ import java.io.File;
 /**
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-public class IBDcomputeIntegrationTest extends CommandLineProgramTest {
+public class ReferenceSimilarityIntegrationTest extends CommandLineProgramTest {
 
     private static final String expectedPrefix = "expected";
 
-    /** Base arguments for the reference and the haploid model */
-    static ArgumentsBuilder getReferenceAndHaplotypeModelForIBDCompute() {
-        return new ArgumentsBuilder().addReference(DROSOPHILA_SIMULANS_2L_REFERENCE)
-                .addArgument(ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG, "HAPLOID");
-    }
-
-    /** Base arguments includes the example.vcf, the reference and the haploid model */
-    private ArgumentsBuilder getBaseArgumentsForIBDCompute() {
-        return getReferenceAndHaplotypeModelForIBDCompute().addVCF(getTestFile("example.vcf.gz"));
-    }
+    private final File vcfTestInput =
+            new File(new File(getTestDataDir()).getParentFile().getAbsolutePath()
+                    + "/" + IBDcompute.class.getSimpleName() + "/example.vcf.gz");
 
     @Test
-    public void testIBDcompute() throws Exception {
-        final File tmpDir = BaseTest.createTempDir("ibdCompute");
-        final ArgumentsBuilder arguments = getBaseArgumentsForIBDCompute();
+    public void testReferenceSimilarity() throws Exception {
+        final File tmpDir = BaseTest.createTempDir("referenceSimilarity");
+        final ArgumentsBuilder arguments = IBDcomputeIntegrationTest
+                .getReferenceAndHaplotypeModelForIBDCompute().addVCF(vcfTestInput);
         arguments.addBooleanArgument("output-differences", true);
         // the output
-        final String outputPrefix = "testIBDcompute";
+        final String outputPrefix = "testReferenceSimilarity";
         arguments.addArgument(StandardArgumentDefinitions.OUTPUT_LONG_NAME,
                 tmpDir.getAbsolutePath() + "/" + outputPrefix);
         // run command line
@@ -81,7 +74,8 @@ public class IBDcomputeIntegrationTest extends CommandLineProgramTest {
     @Test
     public void testIBDcomputeCombiningWindows() throws Exception {
         final File tmpDir = BaseTest.createTempDir("ibdCompute");
-        final ArgumentsBuilder arguments = getBaseArgumentsForIBDCompute();
+        final ArgumentsBuilder arguments = IBDcomputeIntegrationTest
+                .getReferenceAndHaplotypeModelForIBDCompute().addVCF(vcfTestInput);
         // the window-size
         arguments.addArgument(ThaplvArgumentDefinitions.WINDOW_SIZE_LONG, "200")
                 .addArgument(ThaplvArgumentDefinitions.WINDOW_STEP_LONG, "100");
@@ -100,51 +94,6 @@ public class IBDcomputeIntegrationTest extends CommandLineProgramTest {
         IntegrationTestSpec
                 .assertEqualTextFiles(outputFile,
                         getTestFile(expectedPrefix + "_200_100.ibd"));
-    }
-
-    @Test
-    public void testNotOutputDiff() throws Exception {
-        final File tmpDir = BaseTest.createTempDir("ibdCompute");
-        final ArgumentsBuilder arguments = getBaseArgumentsForIBDCompute();
-        // the output
-        final String outputPrefix = "testNotOutputDiff";
-        arguments.addArgument(StandardArgumentDefinitions.OUTPUT_LONG_NAME,
-                tmpDir.getAbsolutePath() + "/" + outputPrefix);
-        // run command line
-        runCommandLine(arguments);
-        File outputFile = new File(tmpDir, outputPrefix + ".diff");
-        // .diff does not exists
-        Assert.assertFalse(outputFile.exists(), "diff file exists");
-        // .ibd exists and the file is the same
-        outputFile = new File(tmpDir, outputPrefix + ".ibd");
-        Assert.assertTrue(outputFile.exists(), "ibd file does not exists");
-        IntegrationTestSpec
-                .assertEqualTextFiles(outputFile, getTestFile(expectedPrefix + ".ibd"));
-    }
-
-    @Test(expectedExceptions = UserException.BadArgumentValue.class)
-    public void testBadWindowSize() throws Exception {
-        final ArgumentsBuilder arguments = getBaseArgumentsForIBDCompute()
-                .addArgument(ThaplvArgumentDefinitions.WINDOW_SIZE_LONG, "0")
-                .addOutput(createTempFile("testBadWindowSize", ""));
-        runCommandLine(arguments);
-    }
-
-    @Test(expectedExceptions = UserException.BadArgumentValue.class)
-    public void testBadStepSize() throws Exception {
-        final ArgumentsBuilder arguments = getBaseArgumentsForIBDCompute()
-                .addArgument(ThaplvArgumentDefinitions.WINDOW_STEP_LONG, "0")
-                .addOutput(createTempFile("testBadStepSize", ""));
-        runCommandLine(arguments);
-    }
-
-    @Test(expectedExceptions = UserException.BadArgumentValue.class)
-    public void testBadStepSizeWithWindowSize() throws Exception {
-        final ArgumentsBuilder arguments = getBaseArgumentsForIBDCompute()
-                .addArgument(ThaplvArgumentDefinitions.WINDOW_SIZE_LONG, "100")
-                .addArgument(ThaplvArgumentDefinitions.WINDOW_STEP_LONG, "200")
-                .addOutput(createTempFile("testBadStepSizeWithWindowSize", ""));
-        runCommandLine(arguments);
     }
 
 }
