@@ -78,7 +78,7 @@ public abstract class BaseTest {
     }
 
     /** Default tolerance for float and double tests */
-    public static double DEFAULT_TOLERANCE = 1e-6; // quite stringent
+    public static final double DEFAULT_TOLERANCE = 1e-6; // quite stringent
 
     /** Returns the location of the resource directory for the tested class */
     public String getTestDataDir() {

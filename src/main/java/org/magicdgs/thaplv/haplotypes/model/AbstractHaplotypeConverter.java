@@ -68,6 +68,7 @@ public abstract class AbstractHaplotypeConverter implements HaplotypeConverter {
      *
      * The returned genotype will have {@link #getOutputPlotidy()} alleles, and phased.
      */
+    @Override
     public Genotype apply(final Genotype genotype) {
         // early termination for already haploid individuals
         if (genotype.getAlleles().size() == 1) {
@@ -87,8 +88,9 @@ public abstract class AbstractHaplotypeConverter implements HaplotypeConverter {
     }
 
     /** {@inheritDoc} */
-    // The output ploidy is the length of missingGenotypeAlleles
+    @Override
     public int getOutputPlotidy() {
+        // The output ploidy is the length of missingGenotypeAlleles
         return missingGenotypeAllele.size();
     }
 

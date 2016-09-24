@@ -222,7 +222,7 @@ public class PairwiseDifferencesWindow implements Iterable<DifferencesDistancePa
      */
     public void addVariantReferenceComparison(final VariantContext variant) {
         if (interval.overlaps(variant)) {
-            for (DifferencesDistancePair currentPair : orderedPairsBySampleNameInHeader) {
+            for (final DifferencesDistancePair currentPair : orderedPairsBySampleNameInHeader) {
                 currentPair.addReference(variant.getGenotype(currentPair.getSample2()));
             }
             variantsInWindow++;

@@ -80,7 +80,7 @@ public class FastaWriter implements Closeable {
      */
     public void addWholeSequence(final ReferenceSequence sequence) {
         writeSequenceName(sequence.getName());
-        for (byte base : sequence.getBases()) {
+        for (final byte base : sequence.getBases()) {
             // sequence name was checked with
             addBaseNoCheck(base);
         }

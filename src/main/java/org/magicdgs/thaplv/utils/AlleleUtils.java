@@ -31,6 +31,7 @@ import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -85,7 +86,7 @@ public class AlleleUtils {
      *
      * @return map of alleles to counts
      */
-    public static final HashMap<Allele, Integer> getAlleleCounts(final Stream<Allele> alleles,
+    public static final Map<Allele, Integer> getAlleleCounts(final Stream<Allele> alleles,
             final boolean includeNoCall) {
         final HashMap<Allele, Integer> alleleCounts = new HashMap<>();
         alleles.filter(a -> includeNoCall || a.isCalled()) // filter the no called
@@ -101,7 +102,7 @@ public class AlleleUtils {
      *
      * @return map of alleles to counts
      */
-    public static final HashMap<Allele, Double> getAlleleFrequencies(final Stream<Allele> alleles,
+    public static final Map<Allele, Double> getAlleleFrequencies(final Stream<Allele> alleles,
             final boolean includeNoCall) {
         final HashMap<Allele, Double> alleleFreqs = new HashMap<>();
         final int total = (int) alleles

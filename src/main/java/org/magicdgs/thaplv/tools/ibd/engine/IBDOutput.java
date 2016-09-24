@@ -61,7 +61,8 @@ public class IBDOutput implements Closeable {
 
     private final double minDiff;
 
-    private final LinkedHashMap<String, SimpleInterval> pairIBDmap;
+    // this should iterate in the order of insertion
+    private final Map<String, SimpleInterval> pairIBDmap;
 
     /**
      * Construct an output for IBD regions

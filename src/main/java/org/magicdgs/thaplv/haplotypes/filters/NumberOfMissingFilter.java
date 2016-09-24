@@ -101,11 +101,7 @@ public class NumberOfMissingFilter implements VariantFilter {
         if (!(o instanceof NumberOfMissingFilter)) {
             return false;
         }
-
-        NumberOfMissingFilter that = (NumberOfMissingFilter) o;
-
-        return maxMissing == that.maxMissing;
-
+        return maxMissing == ((NumberOfMissingFilter) o).maxMissing;
     }
 
     @Override

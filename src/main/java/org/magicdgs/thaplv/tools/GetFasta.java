@@ -77,10 +77,10 @@ public final class GetFasta extends HaploidWalker {
     public int sequenceWidth = 80;
 
     // maps sample and it's writer
-    private HashMap<String, FastaWriter> writerMap;
+    private Map<String, FastaWriter> writerMap;
 
     // maps sample and sequence for mutation)
-    private HashMap<String, ReferenceSequence> sequenceMap;
+    private Map<String, ReferenceSequence> sequenceMap;
 
     // stort the samples instead of passing them to the methods
     private Set<String> samples;
@@ -189,7 +189,7 @@ public final class GetFasta extends HaploidWalker {
         }
         // speed-up analysis making a sequence template (only needs to read the file once)
         final ReferenceSequence template = sequence.getSequence(currentContig);
-        for (String s : samples) {
+        for (final String s : samples) {
             sequenceMap.put(s, new ReferenceSequence(currentContig, template.getContigIndex(),
                     Arrays.copyOf(template.getBases(), template.length())));
         }
