@@ -58,7 +58,6 @@ public class SlidingWindowArgumentCollection implements ArgumentCollectionDefini
         try {
             validateArguments();
         } catch (UserException e) {
-            System.err.println("Catching exception");
             throw new IllegalArgumentException("Bad default value: " + e.getMessage());
         }
     }

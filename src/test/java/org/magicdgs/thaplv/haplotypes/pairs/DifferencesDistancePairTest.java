@@ -67,7 +67,9 @@ public class DifferencesDistancePairTest {
         // create the pair
         final DifferencesDistancePair pair = new DifferencesDistancePair("sample1", "sample2");
         // create differences and missing
-        int differences = 0, equals = 0, missing = 0;
+        int differences = 0;
+        int equals = 0;
+        int missing = 0;
         // add differences (1/2 are differences, 1/6 missing and the rest similarities)
         for (int i = 0; i < 567; i++) {
             if (i % 2 == 0) {

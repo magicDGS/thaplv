@@ -74,8 +74,4 @@ public abstract class HaplotypeModelArgumentCollection implements ArgumentCollec
      */
     protected abstract VariantHaplotypeConverter haplotypeConverterFromArguments();
 
-    protected void throwDontCheckException() {
-
-    }
-
 }
