@@ -1,5 +1,5 @@
 [![build status](https://api.travis-ci.org/magicDGS/thaplv.svg?branch=master)](https://travis-ci.org/magicDGS/thaplv)
-[![Coverage Status](https://coveralls.io/repos/github/magicDGS/thaplv/badge.svg?branch=master)](https://coveralls.io/github/magicDGS/thaplv?branch=master)
+[![codecov](https://codecov.io/gh/magicDGS/thaplv/branch/master/graph/badge.svg)](https://codecov.io/gh/magicDGS/thaplv)
 [![Language](http://img.shields.io/badge/language-java-brightgreen.svg)](https://www.java.com/)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/93781039ef634e549af9305a3448fbf6)](https://www.codacy.com/app/daniel-gomez-sanchez/thaplv?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=magicDGS/thaplv&amp;utm_campaign=Badge_Grade)
 [![Sputnik](https://sputnik.ci/conf/badge)](https://sputnik.ci/app#/builds/magicDGS/thaplv)
