@@ -30,7 +30,6 @@ package org.broadinstitute.hellbender.engine;
 import org.magicdgs.thaplv.cmd.argumentcollections.HaplotypeModelArgumentCollection;
 import org.magicdgs.thaplv.cmd.argumentcollections.HaplotypeModelNoPloidyArgumentCollection;
 import org.magicdgs.thaplv.cmd.argumentcollections.HaplotypeModelWithPloidyArgumentCollection;
-import org.magicdgs.thaplv.haplotypes.model.HaplotypeModel;
 import org.magicdgs.thaplv.haplotypes.model.VariantHaplotypeConverter;
 
 import htsjdk.variant.variantcontext.VariantContext;
@@ -67,9 +66,8 @@ public abstract class HaploidWalker extends VariantWalker {
     protected abstract boolean requiresOutputPloidy();
 
     /**
-     * Does this tool allows the {@link HaplotypeModel#DONT_CHECK} model?
-     *
-     * @return {@code true} if it don't check is allowed; {@link false} otherwise
+     * Returns {@code true} if {@link org.magicdgs.thaplv.haplotypes.model.HaplotypeModel#DONT_CHECK}
+     * model is allowd; {@link false} otherwise.
      */
     protected abstract boolean allowsDontCheck();
 

@@ -58,7 +58,7 @@ public abstract class IBDTool extends HaploidWalker {
             new SlidingWindowArgumentCollection(500_000, 100_000);
 
     @Argument(fullName = "minimum-differences", shortName = "md", doc = "Threshold for number of differences per site in the window to output as an IBD", optional = true)
-    public double MINIMUM_DIFFERENCES = 0.0005;
+    public double minimumDifferences = 0.0005;
 
     @Argument(fullName = "output-differences", shortName = "out-diff", doc = "Output the divergence per window (.diff file) in addition to the IBD tracks")
     public boolean outputDiff = false;
@@ -100,7 +100,7 @@ public abstract class IBDTool extends HaploidWalker {
         slidingWindowArgumentCollection.validateArguments();
         header = getHeaderForVariants();
 
-        output = new IBDOutput(outputPrefix, getIBDcollector(), MINIMUM_DIFFERENCES, !outputDiff);
+        output = new IBDOutput(outputPrefix, getIBDcollector(), minimumDifferences, !outputDiff);
     }
 
     @Override

@@ -56,7 +56,7 @@ public class Main {
      */
     public static void main(final String[] args) {
         try {
-            Object result = new Main().instanceMain(args);
+            final Object result = new Main().instanceMain(args);
             if (result != null) {
                 System.out.println("Tool returned:\n" + result);
             }

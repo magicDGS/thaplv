@@ -40,8 +40,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Collector for variants to compute IBD.
@@ -140,7 +138,7 @@ public class IBDcollector {
         Utils.nonNull(variant);
         final List<PairwiseDifferencesWindow> windows = new ArrayList<PairwiseDifferencesWindow>();
         // keep removing the first windows until the queue is empty or the variant is in the window
-        while ((!queue.isEmpty()) && !queue.peek().getInterval().overlaps(variant)) {
+        while (!queue.isEmpty() && !queue.peek().getInterval().overlaps(variant)) {
             windows.add(queue.pop());
         }
         // if the queue is empty, generate the first queue from this variant and add
@@ -199,6 +197,7 @@ public class IBDcollector {
             // case it is in the middle of a window
             default:
                 initPairWiseDifferencesWindow(variant.getContig(), variant.getStart() - mod + 1);
+                break;
         }
         addVariantToQueue(variant);
         logger.debug("Added first variant ({}:{}) is added, {} windows are kept in RAM",
@@ -233,7 +232,7 @@ public class IBDcollector {
      */
     private void initPairWiseDifferencesWindows(final String contig, final int start,
             final int end) {
-        for (int i = start; i < end; i += (windowStep)) {
+        for (int i = start; i < end; i += windowStep) {
             final PairwiseDifferencesWindow lastWindow = queue.peekLast();
             if (lastWindow != null && lastWindow.isLast()) {
                 logger.debug("Could not create more windows after {}", lastWindow.getInterval());

@@ -34,7 +34,7 @@ import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.hellbender.engine.filters.VariantFilter;
 import org.broadinstitute.hellbender.utils.Utils;
 
-import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Filter based in allele frequency found in the genotypes (the ones with {@link Allele#NO_CALL}
@@ -78,7 +78,7 @@ public class AlleleFrequencyFilter implements VariantFilter {
      */
     @Override
     public boolean test(final VariantContext variant) {
-        final HashMap<Allele, Double> alleleCounts = AlleleUtils.getAlleleFrequencies(
+        final Map<Allele, Double> alleleCounts = AlleleUtils.getAlleleFrequencies(
                 variant.getGenotypes().stream().map(g -> g.getAllele(0)), false);
         return alleleCounts.values().stream().noneMatch(f -> f < minFreq || f > maxFreq);
     }

@@ -43,7 +43,7 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
 
     @Test
     public void testConvertHaplotypesHaploid() throws IOException {
-        IntegrationTestSpec testSpec = new IntegrationTestSpec(
+        final IntegrationTestSpec testSpec = new IntegrationTestSpec(
                 " -V " + getTestDataDir() + "example.vcf"
                         + " -H HAPLOID"
                         + " -O %s",
@@ -54,7 +54,7 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
 
     @Test
     public void testConvertHaplotypesOutputPloidy1() throws IOException {
-        IntegrationTestSpec testSpec = new IntegrationTestSpec(
+        final IntegrationTestSpec testSpec = new IntegrationTestSpec(
                 " -V " + getTestDataDir() + "example.vcf"
                         + " -H HAPLOID"
                         + " -ploidy 1"
@@ -66,7 +66,7 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
 
     @Test
     public void testConvertHaplotypesBackCross() throws IOException {
-        IntegrationTestSpec testSpec = new IntegrationTestSpec(
+        final IntegrationTestSpec testSpec = new IntegrationTestSpec(
                 " -V " + getTestDataDir() + "example.vcf"
                         + " -H BACK_CROSS"
                         + " -O %s",
@@ -78,7 +78,7 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
 
     @Test
     public void testConvertHaplotypesDontCheckError() throws IOException {
-        IntegrationTestSpec testSpec = new IntegrationTestSpec(
+        final IntegrationTestSpec testSpec = new IntegrationTestSpec(
                 " -H DONT_CHECK"
                         + " -V " + getTestDataDir() + "example.vcf"
                         + " -O %s",
@@ -90,7 +90,7 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
 
     @Test
     public void testConvertHaplotypesWrongPloidy() throws IOException {
-        IntegrationTestSpec testSpec = new IntegrationTestSpec(
+        final IntegrationTestSpec testSpec = new IntegrationTestSpec(
                 " -H HAPLOID"
                         + " -ploidy 10"
                         + " -V " + getTestDataDir() + "example.vcf"

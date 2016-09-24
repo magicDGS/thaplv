@@ -33,7 +33,7 @@ import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.hellbender.engine.filters.VariantFilter;
 
-import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Filter based in singleton alleles found in the genotypes (except {@link Allele#NO_CALL}.
@@ -52,7 +52,7 @@ public class NoSingletonFilter implements VariantFilter {
      */
     @Override
     public boolean test(final VariantContext variant) {
-        final HashMap<Allele, Integer> alleleCounts = AlleleUtils.getAlleleCounts(
+        final Map<Allele, Integer> alleleCounts = AlleleUtils.getAlleleCounts(
                 variant.getGenotypes().stream().map(g -> g.getAllele(0)), false);
         // return true if there are 0 alleles with only one count; false otherwise
         return !alleleCounts.isEmpty()
