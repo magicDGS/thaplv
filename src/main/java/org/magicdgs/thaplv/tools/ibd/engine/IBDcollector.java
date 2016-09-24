@@ -138,7 +138,7 @@ public class IBDcollector {
         Utils.nonNull(variant);
         final List<PairwiseDifferencesWindow> windows = new ArrayList<PairwiseDifferencesWindow>();
         // keep removing the first windows until the queue is empty or the variant is in the window
-        while ((!queue.isEmpty()) && !queue.peek().getInterval().overlaps(variant)) {
+        while (!queue.isEmpty() && !queue.peek().getInterval().overlaps(variant)) {
             windows.add(queue.pop());
         }
         // if the queue is empty, generate the first queue from this variant and add
@@ -232,7 +232,7 @@ public class IBDcollector {
      */
     private void initPairWiseDifferencesWindows(final String contig, final int start,
             final int end) {
-        for (int i = start; i < end; i += (windowStep)) {
+        for (int i = start; i < end; i += windowStep) {
             final PairwiseDifferencesWindow lastWindow = queue.peekLast();
             if (lastWindow != null && lastWindow.isLast()) {
                 logger.debug("Could not create more windows after {}", lastWindow.getInterval());

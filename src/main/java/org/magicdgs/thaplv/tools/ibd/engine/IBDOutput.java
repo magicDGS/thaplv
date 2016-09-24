@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Creates a new processor for IBD
@@ -55,7 +56,7 @@ public class IBDOutput implements Closeable {
 
     private final PrintStream ibdTracksWriter;
 
-    private final PrintStream pairwiseDiffWritter;
+    private final Optional<PrintStream> pairwiseDiffWritter;
 
     private final IBDcollector collector;
 
@@ -84,7 +85,8 @@ public class IBDOutput implements Closeable {
         }
         final File pairwiseDiffFile = new File(String.format("%s.diff", outputPrefix));
         try {
-            this.pairwiseDiffWritter = (onlyIBD) ? null : new PrintStream(pairwiseDiffFile);
+            this.pairwiseDiffWritter = (onlyIBD)
+                    ? Optional.empty() : Optional.of(new PrintStream(pairwiseDiffFile));
         } catch (FileNotFoundException e) {
             throw new UserException.CouldNotCreateOutputFile(pairwiseDiffFile, e);
         }
@@ -162,12 +164,12 @@ public class IBDOutput implements Closeable {
     private void printHeader() {
         // write the header for IBD tracks
         ibdTracksWriter.println("Sample1\tSample2\tRef\tStart\tEnd");
-        if (pairwiseDiffWritter == null) {
-            logger.warn("Pairwise-difference file (.diff) won't be written");
-        } else {
+        if (pairwiseDiffWritter.isPresent()) {
             logger.debug("Pairwise-difference file (.diff) will be written");
-            pairwiseDiffWritter.println(
+            pairwiseDiffWritter.get().println(
                     "Sample1\tSample2\tRef\tStart\t\tEnd\tWin_length_length\tN_variants\tMissing\tN_diferences\tDiff_per_site");
+        } else {
+            logger.warn("Pairwise-difference file (.diff) won't be written");
         }
     }
 
@@ -181,13 +183,15 @@ public class IBDOutput implements Closeable {
     /** Print the pair-wise differences for a pair. */
     private void printPairwiseDiff(final PairwiseDifferencesWindow window,
             final DifferencesDistancePair pair) {
-        if (pairwiseDiffWritter != null) {
-            pairwiseDiffWritter.println(String.format("%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%f",
-                    pair.getSample1(), pair.getSample2(), window.getContig(), window.getStart(),
-                    window.getEnd(),
-                    window.getAvailableSites(), window.getVariantsInWindow(),
-                    pair.getNumberOfMissing(), pair.getNumberOfDifferences(),
-                    differencesPerSite(pair, window)));
+        if (pairwiseDiffWritter.isPresent()) {
+            pairwiseDiffWritter.get()
+                    .println(String.format("%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%f",
+                            pair.getSample1(), pair.getSample2(), window.getContig(),
+                            window.getStart(),
+                            window.getEnd(),
+                            window.getAvailableSites(), window.getVariantsInWindow(),
+                            pair.getNumberOfMissing(), pair.getNumberOfDifferences(),
+                            differencesPerSite(pair, window)));
         }
     }
 
@@ -201,8 +205,8 @@ public class IBDOutput implements Closeable {
     /** Flush the writers. */
     private void flushWriters() {
         ibdTracksWriter.flush();
-        if (pairwiseDiffWritter != null) {
-            pairwiseDiffWritter.flush();
+        if (pairwiseDiffWritter.isPresent()) {
+            pairwiseDiffWritter.get().flush();
         }
     }
 
@@ -226,9 +230,9 @@ public class IBDOutput implements Closeable {
         // close the writers
         logger.debug("Trying to close the .ibd file");
         CloserUtil.close(ibdTracksWriter);
-        if (pairwiseDiffWritter != null) {
+        if (pairwiseDiffWritter.isPresent()) {
             logger.debug("Trying to close the .diff file");
-            CloserUtil.close(pairwiseDiffWritter);
+            CloserUtil.close(pairwiseDiffWritter.get());
         }
         logger.debug("Trying to close the collectors counter");
         CloserUtil.close(collector.nCounter);

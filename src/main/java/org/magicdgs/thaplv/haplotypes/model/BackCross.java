@@ -92,9 +92,9 @@ public final class BackCross extends AbstractHaplotypeConverter {
     public boolean isConsideredMissing(final Genotype genotype) {
         return genotype.isNoCall() // first check if it is no call
                 // heterozygous reference are never considered
-                || (genotype.isHetNonRef())
+                || genotype.isHetNonRef()
                 // if it is the conservative model, non homozygous alternative
-                || (conservative && genotype.isHomVar());
+                || conservative && genotype.isHomVar();
     }
 
     /**

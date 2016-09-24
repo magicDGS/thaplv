@@ -33,7 +33,6 @@ import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.hellbender.engine.filters.VariantFilter;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**

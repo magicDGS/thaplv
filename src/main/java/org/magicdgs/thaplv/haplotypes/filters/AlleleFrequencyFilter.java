@@ -34,7 +34,6 @@ import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.hellbender.engine.filters.VariantFilter;
 import org.broadinstitute.hellbender.utils.Utils;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
