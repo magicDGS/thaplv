@@ -74,7 +74,7 @@ public final class GetFasta extends HaploidWalker {
     public String outputPrefix = "";
 
     @Argument(fullName = "width", shortName = "w", doc = "Output width for sequence lines", optional = true)
-    int sequenceWidth = 80;
+    public int sequenceWidth = 80;
 
     // maps sample and it's writer
     private HashMap<String, FastaWriter> writerMap;

@@ -40,8 +40,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Collector for variants to compute IBD.
@@ -199,6 +197,7 @@ public class IBDcollector {
             // case it is in the middle of a window
             default:
                 initPairWiseDifferencesWindow(variant.getContig(), variant.getStart() - mod + 1);
+                break;
         }
         addVariantToQueue(variant);
         logger.debug("Added first variant ({}:{}) is added, {} windows are kept in RAM",

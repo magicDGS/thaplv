@@ -160,20 +160,6 @@ public class PairwiseDifferencesWindow implements Iterable<DifferencesDistancePa
     }
 
     /**
-     * Initialize the reference pairs
-     *
-     * @param sampleNames the sample names
-     *
-     * @deprecated use {@link #initPairs(String, List)} instead
-     */
-    @Deprecated
-    private void initReferencePairs(final ArrayList<String> sampleNames) {
-        initPairs("Reference", sampleNames);
-        logger.info("Number of pair-wise comparisons against {} to perform");
-        // logger.debug("Number of pair-wise comparisons to perform: ", orderedPairsBySampleNameInHeader.size());
-    }
-
-    /**
      * Initialize the pairs.
      */
     private void initPairs(final String sampleName, final List<String> otherSamples) {

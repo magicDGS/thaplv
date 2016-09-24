@@ -27,15 +27,14 @@
 
 package org.magicdgs.thaplv.haplotypes.filters;
 
-import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.hellbender.engine.filters.VariantFilter;
 import org.broadinstitute.hellbender.utils.Utils;
 
 /**
- * Filter based in number of samples with missing genotypes (containing only {@link
- * Allele#NO_CALL}).
+ * Filter based in number of samples with missing genotypes (containing only
+ * {@link htsjdk.variant.variantcontext.Allele#NO_CALL}).
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
