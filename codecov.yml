@@ -9,8 +9,14 @@ coverage:
   status:
     project:
       default:
-        # add a threshold
-        threshold: null
+        # TODO: change once in alpha (auto)
+        target: 50%
+        threshold: 0.05%
+    patch:
+      default:
+        # TODO: change once in alpha (80%)
+        target: 50%
+        threshold: 0.05%
 
 comment:
   layout: "header, diff, changes, uncovered, tree"
