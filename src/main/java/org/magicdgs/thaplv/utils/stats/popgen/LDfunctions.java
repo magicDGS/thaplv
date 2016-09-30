@@ -38,8 +38,6 @@ import org.apache.commons.math3.distribution.ChiSquaredDistribution;
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-// TODO: almost all this functions could be memoized
-// TODO: and the data structure for input could be a container with frequencies of AB, A and B
 public class LDfunctions {
 
     /** Cannot be instantiated. */
@@ -148,7 +146,15 @@ public class LDfunctions {
         return (pA < pB) ? maxR2polarized(pA, pB) : maxR2polarized(pB, pA);
     }
 
-    // TODO: javadoc
+    /**
+     * Computes normalized correlation with the frequencies.
+     *
+     * @param pAB allele frequency of haplotypes with major alleles in locus A and B.
+     * @param pA  major allele frequency of locus A.
+     * @param pB  the allele frequency of locus B.
+     *
+     * @return normalized pearson correlation.
+     */
     public static double r2norm(final double pAB, final double pA, final double pB) {
         final double maxR2 = maxR2(pA, pB);
         final double r2 = r2(pAB, pA, pB);
@@ -226,9 +232,6 @@ public class LDfunctions {
      */
     public static double significantThreshold(final int numberOfHaplotypes,
             final double chiSqrQuantile) {
-        // TODO: this could be memoized to improve performance because it is expected to
-        // TODO: be called for a range from 0 to some number of haplotypes and the same quantile.
-        // TODO: nevertheless it requires a double memoizer...
         return chiSqr.inverseCumulativeProbability(chiSqrQuantile) / numberOfHaplotypes;
     }
 

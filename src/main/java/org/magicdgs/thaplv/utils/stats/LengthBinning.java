@@ -40,7 +40,6 @@ import java.util.TreeMap;
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-// TODO: implement unit tests
 public class LengthBinning {
 
     // value that contains the bins
