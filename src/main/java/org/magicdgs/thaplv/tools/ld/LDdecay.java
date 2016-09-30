@@ -1,49 +1,53 @@
 /*
- * The MIT License (MIT)
+ * Copyright (c) 2016, Daniel Gomez-Sanchez <daniel.gomez.sanchez@hotmail> All rights reserved.
  *
- * Copyright (c) 2015 Daniel Gómez-Sánchez
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * 1. Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+ * and the following disclaimer in the documentation and/or other materials provided with the
+ * distribution.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+ * or promote products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
 package org.magicdgs.thaplv.tools.ld;
 
-import static org.vetmeduni.haplotypetools.utils.Formats.commaFmt;
-
+import org.magicdgs.thaplv.cmd.ThaplvArgumentDefinitions;
+import org.magicdgs.thaplv.cmd.programgroups.AlphaProgramGroup;
+import org.magicdgs.thaplv.haplotypes.filters.HaplotypeFilterLibrary;
+import org.magicdgs.thaplv.haplotypes.filters.NumberOfMissingFilter;
 import org.magicdgs.thaplv.tools.ld.engine.QueueLD;
 
-import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.variant.variantcontext.VariantContext;
-import htsjdk.variant.vcf.VCFFileReader;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.vetmeduni.haplotypetools.components.AbstractTool;
-import org.vetmeduni.haplotypetools.filters.*;
-import org.vetmeduni.haplotypetools.utils.VariantLogger;
+import org.broadinstitute.hellbender.cmdline.Argument;
+import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
+import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
+import org.broadinstitute.hellbender.engine.FeatureContext;
+import org.broadinstitute.hellbender.engine.HaploidWalker;
+import org.broadinstitute.hellbender.engine.ReadsContext;
+import org.broadinstitute.hellbender.engine.ReferenceContext;
+import org.broadinstitute.hellbender.engine.filters.VariantFilter;
+import org.broadinstitute.hellbender.exceptions.UserException;
 
-import java.io.File;
+import java.io.IOException;
 
 /**
  * Class to compute LD in bins in a concurrent way
- * TODO: LinkedList is actually faster than MixedQueue and it could handle a whole chromosome easily
  * (1.5 million variants)
  * TODO: implement minor allele frequency
  * TODO: unit tests
@@ -51,288 +55,130 @@ import java.io.File;
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-public class LDdecay extends AbstractTool {
-    // default parameters
-    protected static int nbins = 1_000;
-    protected static int maxDistance = 10_000;
-    protected static int minDistance = 0;
-    protected static double chiSqrThreshold = 0.95;
-    protected static int noMissing = -1;
-    // protected static double maf_defaul = 0.05;
+@CommandLineProgramProperties(oneLineSummary = "Compute and bin different linkage disequilibrium statistics",
+        // TODO: better description
+        summary = "Compute and bin different linkage disequilibrium statistics. Median and quantiles are an approximation",
+        programGroup = AlphaProgramGroup.class)
+public final class LDdecay extends HaploidWalker {
 
-    // This tool filter the invariant sites and biallelic
-    // TODO: add count filter
-    protected static VariantFilterSet filter = new VariantFilterSet() {{
-        addFilter(new NonBiallelicFilter());
-        addFilter(new InvariantFilter());
-    }};
+    @Argument(fullName = StandardArgumentDefinitions.OUTPUT_LONG_NAME, shortName = StandardArgumentDefinitions.OUTPUT_SHORT_NAME, doc = "Output prefix for LD results.", optional = false)
+    public String outputPrefix;
 
+    @Argument(fullName = "minimum-distance", shortName = "mindist", doc = "Minimum distance (in bp, inclusive) between SNPs to compute LD.", optional = true)
+    public int min = 0;
+
+    // TODO: is this inclusive or exclusive???
+    // TODO: change this to set to null for compute all the chromosome
+    @Argument(fullName = "maximum-distance", shortName = "maxdist", doc = "Maximum distance (in bp) between SNPs to compute LD. If set to < 1, compute all the SNPs within the chromosome for minimum distance.", optional = true)
+    public int max = 10_000;
+
+    @Argument(fullName = "bin-distance", shortName = "bindist", doc = "Distance (in bp) between pairs to be considered in the same bin.", optional = true)
+    public int binDistance = 1_000;
+
+    @Argument(fullName = "chi-square", shortName = "chi", doc = "Chi-square quantile to assess the significance of max. correlation and compute LD.", optional = true)
+    public double chiSqrQuantile = 0.95;
+
+    // TODO: change this to set to null for use only no-missing data
+    // TODO: change the name
+    @Argument(fullName = "minimum-samples", shortName = "mins", doc = "Minimum number of samples available to compute LD. Setting to a negative number only use no-missing data.", optional = true)
+    public int minSamples = -1; // TODO: change default value
+
+    // TODO: change logic, always remove them except requested
+    @Argument(fullName = "remove-singletons", shortName = "rms", doc = "Remove pairs where the minor variant is a singleton.", optional = true)
+    public boolean rmSingletons = false;
+
+    // TODO: add option for minimum allele frequency
+    // @Argument(fullName = "minimum-allele-frequency", shortName = "maf", doc = "Minimum allele frequency for a marker to compute LD.", optional = true)
+    // public Double maf = null;
+
+    // TODO: add option for only output binned results
+    // TODO: probably much better the other way around -> option for output all pairs
+    // @Argument(fullName = "only-bin", shortName = "bin", doc = "Output only binned results.", optional = true)
+    // public boolean onyBin = false;
+
+    @Argument(fullName = ThaplvArgumentDefinitions.NUMBER_OF_THREAD_LONG, shortName = ThaplvArgumentDefinitions.NUMBER_OF_THREAD_SHORT, doc = "Number of threads to use in the computation.", optional = true)
+    public int nThreads = 1;
 
     @Override
-    public int run(String[] args) {
-        try {
-            // Comand line parsing and extracting options
-            CommandLine cmd = programParser(args);
-            // open the input
-            VCFFileReader input = new VCFFileReader(new File(cmd.getOptionValue("i")), false);
-            // get the number of samples from the VCFheader
-            int numOfSamples = input.getFileHeader().getNGenotypeSamples();
-            // obtain the maximum distance to compute LD
-            int max = (cmd.hasOption("maxdist")) ? Integer.parseInt(cmd.getOptionValue("maxdist"))
-                    : maxDistance;
-            // obtain the minimum distance to compute LD
-            int min = (cmd.hasOption("mindist")) ? Integer.parseInt(cmd.getOptionValue("mindist"))
-                    : minDistance;
-            // obtain the bin distance to compute the statistics
-            int binDistance =
-                    (cmd.hasOption("bindist")) ? Integer.parseInt(cmd.getOptionValue("bindist"))
-                            : nbins;
-            // obtain the quantile for the chi-square distribution
-            double chiSqrQuantile =
-                    (cmd.hasOption("chi")) ? Double.parseDouble(cmd.getOptionValue("chi"))
-                            : chiSqrThreshold;
-            // check if the quantile is correct
-            if (chiSqrQuantile < 0 || chiSqrQuantile >= 1) {
-                throw new ParseException("Chi-square quantile should be in the range (0, 1)");
-            }
-            // obtain the minimum counts
-            int minSamples = (cmd.hasOption("mins")) ? Integer.parseInt(cmd.getOptionValue("mins"))
-                    : noMissing;
-            // log if no-missing data is allowed because the minSamples is set to lower than 0
-            if (minSamples < 0 || minSamples > numOfSamples) {
-                minSamples = numOfSamples;
-            }
-            // obtain the maf threshold
-            //			Double maf = (cmd.hasOption("maf")) ? Double.parseDouble(cmd.getOptionValue("maf")) : maf_defaul;
-            //			if(maf < 0 || maf >= 1) {
-            //				throw new RuntimeException("MAF threshold should be in the range 0-1");
-            //			}
-            boolean rmSingletons = cmd.hasOption("rms");
-            int nThreads = (cmd.hasOption("t")) ? Integer.parseInt(cmd.getOptionValue("t")) : 1;
-            // Generate the queueLD
-            QueueLD queue = new QueueLD(cmd.getOptionValue("o"), binDistance, min, max, minSamples,
-                    rmSingletons, chiSqrQuantile, nThreads, logger);
-
-
-            // print the command line
-            printCmdLine(args);
-            // print some warnings
-            logger.warn(
-                    "VCF files should contains either haploid individuals or homozygous; other positions will be removed and called as missing");
-            logger.warn("Invariant and multi-allelic sites will be filtered");
-            // add the minCount filter
-            if (minSamples != 0) {
-                filter.addFilter(new MissingSamplesCountFilter(minSamples));
-            }
-            // log if no-missing data is allowed because the minSamples is set to lower than 0
-            if (minSamples < 0 || minSamples > numOfSamples) {
-                logger.warn(
-                        "Minimum number of samples set to lower than 0 or higher than the actual number of samples in the VCF: computing for no-missing data");
-            }
-            if (chiSqrQuantile == 0) {
-                logger.warn(
-                        "Computation for r2 will be performed for all maximum r2 independently of its value (except for 0) because the chi-square quantile is set to 0");
-            }
-
-
-            // Generate the iterator
-            CloseableIterator<VariantContext> it;
-            if (cmd.hasOption("chr")) {
-                String chr = cmd.getOptionValue("chr");
-                int chrLength = input.getFileHeader().getSequenceDictionary().getSequence(chr)
-                        .getSequenceLength();
-                it = input.query(chr, 1, chrLength);
-                logger.info("Analysing only chromosome ", chr, " (", commaFmt.format(chrLength),
-                        " bp)");
-            } else {
-                it = input.iterator();
-                logger.info("Analysing all chromosomes");
-            }
-            // start a progress logger
-            // TODO: change how many times the logger is triggered
-            VariantLogger progress = new VariantLogger(logger, 100_000, "Loaded");
-            // loggin some information
-            logger.info("Computing LD for variants with at least ", minSamples,
-                    " genotypes and a maximum r2 into the ", chiSqrQuantile,
-                    " chi-square quantile");
-
-            if (max < 1 && min == 0) {
-                logger.info("All variants within the chromosome will be used to compute LD");
-            } else {
-                logger.info("Only variants with a distance between them in the range [", min, ",",
-                        (max < 1) ? "chromosome lenght" : max, "] bp will be considered");
-            }
-            logger.info("Binning results by ", commaFmt.format(binDistance), " bp");
-
-            if (rmSingletons) {
-                logger.info("Singletons will be removed");
-                filter.addFilter(new SingletonFilter());
-            } else {
-                logger.info("Singletons will not be removed");
-            }
-
-            // start parsing
-            while (it.hasNext()) {
-                // read the variant
-                VariantContext var = it.next();
-                // using the genotype filter to reliable call biallelic SNPs even if the ALT column have more than one
-                if (!filter.isFilter(var.getGenotypes())) {
-                    queue.add(var);
-                }
-                if (progress.variant(var)) {
-                    logger.debug("Variants in RAM: ", commaFmt.format(queue.size()));
-                }
-            }
-            progress.logNumberOfVariantsProcessed();
-            logger.debug("Variants in RAM after loading everything: ",
-                    commaFmt.format(queue.size()));
-            filter.report(logger);
-            // close the queue
-            queue.close();
-        } catch (IllegalArgumentException | ParseException e) {
-            logger.debug(e);
-            printUsage(e.getMessage());
-        } catch (Exception e) {
-            logger.debug(e);
-            logger.error(e.getMessage());
-            return 2;
-        }
-
-        return 0;
+    protected boolean requiresOutputPloidy() {
+        return false;
     }
 
-    // TODO: add the rest of the options
     @Override
-    protected Options programOptions() {
-        // the input file
-        Option input = Option.builder("i")
-                .longOpt("input")
-                .desc("Input VCF file (indexed).")
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("INPUT.vcf")
-                .required()
-                .build();
-        // the output prefix
-        Option output = Option.builder("o")
-                .longOpt("output")
-                .desc(String.format("Output prefix for LD results"))
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("PREFIX")
-                .required()
-                .build();
-        // the minimum distance to compute LD
-        Option minDist = Option.builder("mindist")
-                .longOpt("minimum-distance")
-                .desc("Minimum distance (inclusive) between SNPs to compute LD in bp. [Default: "
-                        + minDistance + "]")
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("INT")
-                .required(false)
-                .type(int.class)
-                .build();
-        // the maximum distance to compute LD
-        Option maxDist = Option.builder("maxdist")
-                .longOpt("maximum-distance")
-                .desc("Maximum distance between SNPs to compute LD in bp. If set to < 1, compute for all the SNPs within the chromosome from minimum distance [Default: "
-                        + maxDistance + "]")
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("INT")
-                .required(false)
-                .type(int.class)
-                .build();
-        // the bin size
-        Option binDist = Option.builder("bindist")
-                .longOpt("bin-distance")
-                .desc("Distance between pairs to be considered in the same bin in bp. [Default: "
-                        + nbins + "]")
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("INT")
-                .required(false)
-                .type(int.class)
-                .build();
-        // chi-square threshold
-        Option chiThr = Option.builder("chi")
-                .longOpt("chi-square")
-                .desc("Chi-square quantile to assess the significance of r2max and compute LD. [Default: "
-                        + chiSqrThreshold + "]")
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("DOUBLE")
-                .required(false)
-                .type(double.class)
-                .build();
-        // the minimum number of samples
-        Option minSamples = Option.builder("mins")
-                .longOpt("minimum-samples")
-                .desc("Minimum number of samples available to compute LD. Setting to a negative number only use no-missing data [Default: "
-                        + noMissing + "]")
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("INT")
-                .required(false)
-                .type(int.class)
-                .build();
-        // no singletons
-        Option singletons = Option.builder("rms")
-                .longOpt("remove-singletons")
-                .desc("Remove pairs where the minor variant is a singleton.")
-                .hasArg(false)
-                .required(false)
-                .build();
-        //		Option maf = Option.builder("maf")
-        //								.longOpt("minimum-allele-frequency")
-        //								.desc("Minimum allele frequency for a marker to compute LD. [Default:"+maf_defaul+"]")
-        //								.hasArg()
-        //								.numberOfArgs(1)
-        //								.argName("double")
-        //								.required(false)
-        //								.type(double.class)
-        //								.build();
-        // flag to only output the binned results
-        //		Option onlyBin = Option.builder("bin")
-        //							   .longOpt("only-bin")
-        //							   .desc("Output only binned results.")
-        //							   .hasArg(false)
-        //							   .required(false)
-        //							   .build();
-        Option chromosome = Option.builder("chr")
-                .longOpt("chromosome")
-                .desc("Perform the LD analysis only in this chromosome.")
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("CHROM")
-                .required(false)
-                .build();
-        Option threads = Option.builder("t")
-                .longOpt("threads")
-                .desc("Number of threads to use in the computation [Default: " + 1 + "]")
-                .hasArg()
-                .numberOfArgs(1)
-                .argName("THREADS")
-                .required(false)
-                .build();
+    protected boolean allowsDontCheck() {
+        return true;
+    }
+
+    // this is the queue for store the ld results
+    private QueueLD queue;
 
 
-        Options options = new Options();
+    @Override
+    protected VariantFilter makeVariantFilter() {
+        // this is already removing invariant sites
+        VariantFilter filter = HaplotypeFilterLibrary.BIALLELIC_FILTER;
+        if (rmSingletons) { // TODO: this should change with the parameter
+            filter = filter.and(HaplotypeFilterLibrary.NO_SINGLETON_FILTER);
+        }
+        if (minSamples == -1) { // TODO: this should change with the parameter
+            // TODO: I don't know if this is working as expected
+            filter = filter.and(new NumberOfMissingFilter(minSamples));
+        }
+        // TODO: the maf threshold should be here
+        return filter;
+    }
 
-        options.addOption(threads);
-        options.addOption(chromosome);
-        // options.addOption( onlyBin );
-        // options.addOption( maf );
-        options.addOption(singletons);
-        options.addOption(minSamples);
-        options.addOption(chiThr);
-        options.addOption(maxDist);
-        options.addOption(minDist);
-        options.addOption(binDist);
-        options.addOption(output);
-        options.addOption(input);
+    // TODO: change messages and validation of args
+    @Override
+    public void onTraversalStart() {
+        if (chiSqrQuantile < 0 || chiSqrQuantile >= 1) {
+            throw new UserException.BadArgumentValue("Chi-square quantile should be in the range (0, 1)");
+        }
+        if (nThreads < 1) {
+            throw new UserException.BadArgumentValue("Threads cannot be less than 1");
+        }
+        if (minSamples < 1) {
+            throw new UserException.BadArgumentValue("Minimum samples cannot be smaller than 1");
+        }
+        if (binDistance < 1) {
+            throw new UserException.BadArgumentValue("Bin length cannot be smaller than 1");
+        }
+        if (max > 0 && min > max) {
+            throw new UserException.BadArgumentValue(
+                    "Minimum distance between markers cannot be bigger than maximum distance");
+        } else if (min < 0) {
+            throw new UserException.BadArgumentValue(
+                    "Minimum distance between markers cannot be negative");
+        }
 
-        return options;
+        // warnings
+        if (chiSqrQuantile == 0) {
+            logger.warn(
+                    "Computation for r2 will be performed for all maximum r2 independently of its value (except for 0) because the chi-square quantile is set to 0");
+        }
+        if (max < 1 && min == 0) {
+            logger.info("All variants within the chromosome will be used to compute LD");
+        } else {
+            logger.info(
+                    "Only variants with a distance between them in the range [{},{}] bp will be considered.",
+                    min, (max < 1) ? "chromosome lenght" : max);
+        }
+
+
+        queue = new QueueLD(outputPrefix, binDistance, min, max, minSamples,
+                rmSingletons, chiSqrQuantile, nThreads, logger);
+    }
+
+    @Override
+    public void apply(VariantContext variant, ReadsContext readsContext,
+            ReferenceContext referenceContext, FeatureContext featureContext) {
+        try {
+            // TODO: debugging the variants in RAM was done before here
+            // TODO: implement it inside the queue will be better
+            queue.add(variant);
+        } catch (IOException e) {
+            // TODO: change exception handling
+            throw new UserException(e.getMessage(), e);
+        }
     }
 }

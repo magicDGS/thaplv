@@ -50,4 +50,7 @@ public class ThaplvArgumentDefinitions {
     public final static String WINDOW_STEP_LONG = "window-step-size";
     public final static String WINDOW_STEP_SHORT = "ss";
 
+    public final static String NUMBER_OF_THREAD_LONG = "threads";
+    public final static String NUMBER_OF_THREAD_SHORT = "nt";
+
 }

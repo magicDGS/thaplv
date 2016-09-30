@@ -27,7 +27,6 @@
 
 package org.magicdgs.thaplv.tools.ld.engine;
 
-
 import org.magicdgs.thaplv.haplotypes.light.SNPpair;
 import org.magicdgs.thaplv.utils.stats.LengthBinning;
 import org.magicdgs.thaplv.utils.stats.popgen.LDfunctions;
@@ -42,6 +41,7 @@ import java.util.List;
  * @deprecated this class should be implemented directly in the LDdecay tool
  */
 @Deprecated
+// TODO: probably this should not be deprecated but cleaned
 public class LDbinning {
 
     // list with the bins to write (for some statistics we don't need binning

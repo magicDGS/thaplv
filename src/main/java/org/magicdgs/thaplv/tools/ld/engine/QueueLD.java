@@ -1,36 +1,41 @@
 /*
- * The MIT License (MIT)
+ * Copyright (c) 2016, Daniel Gomez-Sanchez <daniel.gomez.sanchez@hotmail> All rights reserved.
  *
- * Copyright (c) 2015 Daniel Gómez-Sánchez
+ * Redistribution and use in source and binary forms, with or without modification, are permitted
+ * provided that the following conditions are met:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * 1. Redistributions of source code must retain the above copyright notice, this list of conditions
+ * and the following disclaimer.
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions
+ * and the following disclaimer in the documentation and/or other materials provided with the
+ * distribution.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse
+ * or promote products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
 package org.magicdgs.thaplv.tools.ld.engine;
 
 import org.magicdgs.thaplv.haplotypes.light.LightGenotype;
 import org.magicdgs.thaplv.haplotypes.light.SNPpair;
-import org.magicdgs.thaplv.utils.concurrent.OtherExecutors;
+import org.magicdgs.thaplv.utils.concurrent.ExecutorsFactory;
 import org.magicdgs.thaplv.utils.stats.popgen.LDfunctions;
 
-import htsjdk.samtools.util.Log;
+import htsjdk.samtools.util.AbstractProgressLogger;
 import htsjdk.variant.variantcontext.VariantContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -50,13 +55,16 @@ public class QueueLD implements Closeable {
 
     private final static int BUFFER_SIZE = 500_000;
 
+    // logger for this class
+    private static final Logger logger = LogManager.getLogger(QueueLD.class);
+
+
     // Executor for the thread pool
     private final ThreadPoolExecutor executor;
     // queue with the light genotypes
     private final Deque<LightGenotype> snpQueue;
-    // logger for this class
-    private final Log logger;
     // logger for the variants
+    // TODO: probably change for ProgressMeter
     private final VariantLogger progress;
 
     // current contig
@@ -71,36 +79,15 @@ public class QueueLD implements Closeable {
     final boolean rmSingletons;
     final double chiSqrQuantile;
 
-    // TODO: check the parameters here instead of in the tool class
     public QueueLD(String prefix, int binLength, int minimumDistance, int maximumDistance,
             int minimumSamples, boolean rmSingletons, double chiSqrQuantile, int nThreads,
-            Log logger) {
-        if (binLength < 1) {
-            throw new IllegalArgumentException("Bin length cannot be smaller than 1");
-        }
-        if (maximumDistance > 0 && minimumDistance > maximumDistance) {
-            throw new IllegalArgumentException(
-                    "Minimum distance between markers cannot be bigger than maximum distance");
-        } else if (minimumDistance < 0) {
-            throw new IllegalArgumentException(
-                    "Minimum distance between markers cannot be negative");
-        }
-        if (minimumSamples < 1) {
-            throw new IllegalArgumentException("Minimum samples cannot be smaller than 1");
-        }
-        if (chiSqrQuantile < 0 || chiSqrQuantile >= 1) {
-            throw new IllegalArgumentException("Chi-square quantile should be in the range (0, 1)");
-        }
-        if (nThreads < 1) {
-            throw new IllegalArgumentException("Threads cannot be less than 1");
-        }
+            Logger logger) {
+        // TODO: make argument validation here too?
         this.minimumDistance = minimumDistance;
         this.maximumDistance = maximumDistance;
         this.chiSqrQuantile = chiSqrQuantile;
         this.minimumSamples = minimumSamples;
         this.rmSingletons = rmSingletons;
-        // get a logger for this class
-        this.logger = Log.getInstance(this.getClass());
         // start with a certain number of threads
         if (nThreads < 2) {
             this.logger.debug("Less than 2 threads were provided; using a single thread QueueLD");
@@ -109,23 +96,24 @@ public class QueueLD implements Closeable {
             // don't waste resources when generating threads; if the user provides more than the buffer size it's his own risk
             int bufferSize = (BUFFER_SIZE < nThreads) ? nThreads : BUFFER_SIZE;
             // create an executor that is bounded in the buffer size
-            this.logger.debug("Using ", nThreads, " threads with buffer-size=", bufferSize);
-            this.executor = (ThreadPoolExecutor) OtherExecutors
+            this.logger.debug("Using {} threads with buffer-size={}", nThreads, bufferSize);
+            this.executor = (ThreadPoolExecutor) ExecutorsFactory
                     .newFixedThreadPoolWithBoundedQueue(nThreads, bufferSize);
         }
         // start the logger
-        // TODO: change how many times the logger is triggered
-        this.progress = new VariantLogger(logger, 1_000_000, "Computed LD on", "pairs");
-        // I don't think that I need a ConcurrentList with the current implemented idea
+        this.progress = new VariantLogger(logger);
+        // TODO: I don't think that I need a ConcurrentList with the current implemented idea
         this.snpQueue = new LinkedList<>();
         // start the bins
         this.ldBins = new LDbinning(binLength);
         try {
             this.output = new BinLDwriter(prefix, ldBins);
         } catch (IOException e) {
+            // TODO: change this exception handling
             throw new IllegalArgumentException(e);
         }
     }
+
 
     /**
      * Add the variant to the queue
@@ -239,13 +227,15 @@ public class QueueLD implements Closeable {
      */
     private synchronized void monitorLogging() {
         if (executor != null) {
-            logger.debug(String
-                    .format("[thread-pool] [%d/%d] Active: %d, Completed: %d, Task: %d, isShutdown: %s, isTerminated: %s",
+            logger.debug(
+                    "[thread-pool] [{}/{}] Active: {}, Completed: {}, Task: {}, isShutdown: {}, isTerminated: {}",
+                    () -> new Object[] {
                             executor.getPoolSize(), executor.getCorePoolSize(),
                             executor.getActiveCount(),
                             executor.getCompletedTaskCount(), executor.getTaskCount(),
                             executor.isShutdown(),
-                            executor.isTerminated()));
+                            executor.isTerminated()
+                    });
         }
     }
 
@@ -264,7 +254,8 @@ public class QueueLD implements Closeable {
             executor.shutdown();
         }
         writeBins();
-        progress.logNumberOfVariantsProcessed();
+        // TODO: logging all pairs processed by this queue
+        // progress.logNumberOfVariantsProcessed();
         output.close();
         monitorLogging();
     }
@@ -303,11 +294,31 @@ public class QueueLD implements Closeable {
                     if (LD != null) {
                         ldBins.add(pair, LD);
                         // log the pair if it is computed
-                        progress.variants(pair.getReferenceA(), pair.getPositionA(),
-                                "first variant");
+                        logger.debug("First pair: {}", pair);
+                        progress.record(pair.getReferenceA(), pair.getPositionA());
                     }
                 }
             }
+        }
+    }
+
+    private static class VariantLogger extends AbstractProgressLogger {
+
+        private final Logger variantLog;
+
+        // TODO: javadoc
+        protected VariantLogger(final Logger variantLog) {
+            super("pairs", "Computed LD on", 1_000_000);
+            this.variantLog = variantLog;
+        }
+
+        @Override
+        protected void log(String... message) {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (String s : message) {
+                stringBuilder.append(s);
+            }
+            variantLog.info(stringBuilder.toString());
         }
     }
 
