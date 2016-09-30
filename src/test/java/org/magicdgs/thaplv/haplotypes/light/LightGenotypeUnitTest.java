@@ -30,6 +30,8 @@ package org.magicdgs.thaplv.haplotypes.light;
 
 import static org.magicdgs.thaplv.haplotypes.light.LightGenotype.SNP;
 
+import org.magicdgs.thaplv.utils.test.BaseTest;
+
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.GenotypeBuilder;
 import htsjdk.variant.variantcontext.GenotypesContext;
@@ -43,7 +45,7 @@ import java.util.LinkedList;
  * @deprecated tested class is deprecated
  */
 @Deprecated
-public class LightGenotypeTest {
+public class LightGenotypeUnitTest extends BaseTest {
 
     private final static int testSize = 100;
     private final static SNP[] result = new SNP[testSize];

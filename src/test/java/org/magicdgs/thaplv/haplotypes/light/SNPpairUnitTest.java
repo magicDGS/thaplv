@@ -29,6 +29,8 @@ package org.magicdgs.thaplv.haplotypes.light;
 
 import static org.magicdgs.thaplv.haplotypes.light.LightGenotype.SNP;
 
+import org.magicdgs.thaplv.utils.test.BaseTest;
+
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -38,7 +40,7 @@ import org.testng.annotations.Test;
  * @deprecated tested class is deprecated
  */
 @Deprecated
-public class SNPpairTest {
+public class SNPpairUnitTest extends BaseTest {
 
     @DataProvider(name = "pairsToTest")
     public Object[][] pairsToTest() throws Exception {

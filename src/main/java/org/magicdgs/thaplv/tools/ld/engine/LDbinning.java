@@ -89,8 +89,6 @@ public class LDbinning {
     public void add(final SNPpair pair, final double[] values) {
         final String chromosomeName = pair.getReferenceA();
         if (!chromosomeName.equals(pair.getReferenceB())) {
-            // TODO: uncomment when implemented for several chromosomes
-            // chromosomeName = String.join("-", chromosomeName, pair.getReferenceB());
             throw new IllegalArgumentException(
                     "Output for pairs in different chromosomes not implemented");
         }
@@ -120,8 +118,8 @@ public class LDbinning {
                 final int negIndex = statsToBin
                         .indexOf(String.format("%s_neg", LDfunctions.rStatisticsOrder[i]));
                 // bin according to the sign of the value
-                // TODO: is this binning correct? Where to put 0? Options:
-                // TODO: to negative (like current), to positive, to both or ignore it
+                // TODO: value of 0 is actually bin to the negative, but it could be added to the positive too or both
+                // TODO: discussion in https://github.com/magicDGS/thaplv/issues/39
                 if (posIndex != -1 && values[i] > 0) {
                     addToBin(posIndex, distance, values[i]);
                 } else if (negIndex != -1 && values[i] <= 0) {

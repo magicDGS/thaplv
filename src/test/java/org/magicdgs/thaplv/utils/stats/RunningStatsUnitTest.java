@@ -40,7 +40,7 @@ public class RunningStatsUnitTest extends BaseTest {
         Assert.assertThrows(IllegalArgumentException.class, () -> stats.getQuantile(5));
         int num = 0;
         for (double i = 0d; i < 1d; i += 0.000001d) {
-            stats.push(i);
+            stats.add(i);
             // assert than we are incrementing the number of data
             Assert.assertEquals(stats.numDataValues(), ++num);
         }

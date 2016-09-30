@@ -39,16 +39,15 @@ import java.util.TreeMap;
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-// TODO: synchronization could be done in a better/safer way
-// TODO: change the implementation to use the exact implementations if the number of values added is low
 public class RunningStats {
-    // TODO: change the mean/stdev implementation for apache.commons.math3 methods?
-    // TODO: will be much better for consistency
     private double newMean, newStdDev;
     private final PSquarePercentile median;
-    private final Variance sampleVar;
     // the quantiles always includes the median
     private final Map<Double, PSquarePercentile> quantiles;
+
+    /** @deprecated use the running implementation instead. */
+    @Deprecated
+    private final Variance sampleVar;
 
     /**
      * Constructs a new running statistic without quantiles. Computes the mean, variance, standard
@@ -79,10 +78,23 @@ public class RunningStats {
      *
      * @param x the value to add to the running statistics.
      *
-     * @return {@code true} if the value is pushed; {@code true} otherwise
+     * @return {@code true} if the value is pushed; {@code true} otherwise.
+     *
+     * @deprecated use {@link #add(double)} instead.
      */
-    // TODO: change the name to add()
-    public synchronized boolean push(double x) {
+    @Deprecated
+    public synchronized boolean push(final double x) {
+        return add(x);
+    }
+
+    /**
+     * Adds a new value to the statistics. {@link Double#NaN} will be ignored.
+     *
+     * @param x the value to add to the running statistics.
+     *
+     * @return {@code true} if the value is pushed; {@code true} otherwise.
+     */
+    public synchronized boolean add(final double x) {
         if (!Double.isNaN(x)) {
             median.increment(x);
             // See Knuth TAOCP vol 2, 3rd edition, page 232
@@ -217,7 +229,7 @@ public class RunningStats {
 
     // for testing
     @Override
-    public String toString() {
+    public synchronized String toString() {
         final StringBuilder builder = new StringBuilder();
         builder.append("Stats for ");
         builder.append(numDataValues());

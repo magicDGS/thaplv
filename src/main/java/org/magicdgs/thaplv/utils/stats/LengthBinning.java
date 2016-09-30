@@ -27,9 +27,13 @@
 
 package org.magicdgs.thaplv.utils.stats;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.broadinstitute.hellbender.utils.Utils;
+
 import java.text.DecimalFormat;
 import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Class that bin a double based on the length, computing mean, median and quantiles.
@@ -40,8 +44,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class LengthBinning {
 
     // value that contains the bins
-    // TODO: implement a getter?
-    private final ConcurrentSkipListMap<Integer, RunningStats> binStat;
+    private final SortedMap<Integer, RunningStats> binStat;
 
     // value that contains the bin size
     private final int binSize;
@@ -57,7 +60,6 @@ public class LengthBinning {
      * @param binSize size of the bin.
      */
     public LengthBinning(final int binSize) {
-        // TODO: change contract to compute defaults with 0.005, 0.025, 0.975, 0.995 to have the 99% and 95%
         this(binSize, 1, 5, 95, 99);
     }
 
@@ -68,18 +70,15 @@ public class LengthBinning {
      * @param quantiles quantiles to add in the range (1, 100).
      */
     public LengthBinning(final int binSize, final double... quantiles) {
-        if (binSize < 1) {
-            throw new IllegalArgumentException(
-                    "Binning cannot be performed for bins lower than 1 bp");
-        }
-        this.binStat = new ConcurrentSkipListMap<>();
+        Utils.validateArg(binSize >= 1, "Binning cannot be performed for bins lower than 1 bp");
+        this.binStat = new TreeMap<>();
         this.binSize = binSize;
         this.quantiles = quantiles;
         empty = true;
     }
 
     /** Returns {@code true} if no value was tracked in this object; {@code false} otherwise. */
-    public boolean isEmpty() {
+    public synchronized boolean isEmpty() {
         return empty;
     }
 
@@ -89,14 +88,14 @@ public class LengthBinning {
      * @param length the length associated with this value.
      * @param value  the value to add to the computation of the statistic.
      */
-    public void add(final int length, final double value) {
-        final int cBin = toBin(length);
+    public synchronized void add(final int length, final double value) {
+        final int cBin = toBin(length, binSize);
         RunningStats stats = binStat.get(cBin);
         if (stats == null) {
             stats = new RunningStats(quantiles);
             binStat.put(cBin, stats);
         }
-        if (stats.push(value)) {
+        if (stats.add(value)) {
             empty = false;
         }
     }
@@ -112,8 +111,7 @@ public class LengthBinning {
     }
 
     /** Format the bins stored in this object. */
-    public String formatBins(final DecimalFormat digits) {
-        // TODO: format bins with no data???
+    public synchronized String formatBins(final DecimalFormat digits) {
         final StringBuilder builder = new StringBuilder();
         binStat.entrySet().stream().filter(bin -> bin.getValue().numDataValues() != 0)
                 .forEach(bin -> {
@@ -137,8 +135,9 @@ public class LengthBinning {
         return builder.toString();
     }
 
-    /** Getd the bin for a concrete value. */
-    private int toBin(final int length) {
+    /** Gets the bin for a concrete value. */
+    @VisibleForTesting
+    static int toBin(final int length, final int binSize) {
         int bin = (int) Math.floor((length - 1) / binSize);
         bin *= binSize;
         bin += binSize;
@@ -147,7 +146,7 @@ public class LengthBinning {
 
     // for testing
     @Override
-    public String toString() {
+    public synchronized String toString() {
         final StringBuilder builder = new StringBuilder();
         for (final Map.Entry<Integer, RunningStats> bin : binStat.entrySet()) {
             builder.append("\tBin #");
@@ -165,7 +164,7 @@ public class LengthBinning {
      *
      * After calling this method, {@link #isEmpty()} will return {@code true}.
      */
-    public void clear() {
+    public synchronized void clear() {
         binStat.clear();
         empty = true;
     }

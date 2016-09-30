@@ -27,6 +27,7 @@
 
 package org.magicdgs.thaplv.haplotypes.light;
 
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.GenotypesContext;
@@ -47,7 +48,6 @@ import java.util.stream.Stream;
 public class LightGenotype implements Serializable {
     private static final long serialVersionUID = 1L;
 
-
     private final SNP[] orderedSNPlist;
     private final String contig;
     private final int pos;
@@ -57,7 +57,7 @@ public class LightGenotype implements Serializable {
      *
      * @param variant the variant to convert
      */
-    public LightGenotype(VariantContext variant) {
+    public LightGenotype(final VariantContext variant) {
         this(variant.getContig(), variant.getStart(), variant.getGenotypes(),
                 variant.getReference(), variant.getAlternateAlleles());
     }
@@ -71,8 +71,8 @@ public class LightGenotype implements Serializable {
      * @param ref          the reference allele
      * @param alternatives the alternative alleles
      */
-    public LightGenotype(String contig, int position, GenotypesContext genotypes, Allele ref,
-            List<Allele> alternatives) {
+    public LightGenotype(final String contig, final int position, final GenotypesContext genotypes,
+            final Allele ref, final List<Allele> alternatives) {
         this.contig = contig;
         this.pos = position;
         orderedSNPlist = new SNP[genotypes.size()];
@@ -90,13 +90,14 @@ public class LightGenotype implements Serializable {
     }
 
     /**
-     * Constructor for testing purposes
+     * Constructor for testing purposes.
      *
      * @param contig         the contig for the genotype
      * @param pos            the position for the genotype
      * @param orderedSNPlist the list of SNPs
      */
-    public LightGenotype(String contig, int pos, SNP[] orderedSNPlist) {
+    @VisibleForTesting
+    public LightGenotype(final String contig, final int pos, final SNP[] orderedSNPlist) {
         this.contig = contig;
         this.pos = pos;
         this.orderedSNPlist = orderedSNPlist;
@@ -108,7 +109,7 @@ public class LightGenotype implements Serializable {
      *
      * @param genotypes the genotypes
      */
-    private void initBiallelic(GenotypesContext genotypes) {
+    private void initBiallelic(final GenotypesContext genotypes) {
         int i = 0;
         for (final Genotype geno : genotypes) {
             if (geno.isHomRef()) {
@@ -129,8 +130,8 @@ public class LightGenotype implements Serializable {
      * @param ref          the reference allele
      * @param alternatives the alternative alleles
      */
-    private void initMultiAllelic(GenotypesContext genotypes, Allele ref,
-            List<Allele> alternatives) {
+    private void initMultiAllelic(final GenotypesContext genotypes, final Allele ref,
+            final List<Allele> alternatives) {
         // create a set with the alleles
         final HashSet<Allele> alleles = new HashSet<>();
         alleles.add(ref);
@@ -228,7 +229,7 @@ public class LightGenotype implements Serializable {
      *
      * @return the count of "snp"
      */
-    private int getNumberOf(SNP snp) {
+    private int getNumberOf(final SNP snp) {
         return (int) Stream.of(orderedSNPlist).filter(x -> x == snp).count();
     }
 
@@ -248,7 +249,7 @@ public class LightGenotype implements Serializable {
      *
      * @return the genotype from the index sample
      */
-    public SNP getGenotypeAt(int index) {
+    public SNP getGenotypeAt(final int index) {
         return this.orderedSNPlist[index];
     }
 

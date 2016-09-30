@@ -43,16 +43,16 @@ import java.util.stream.IntStream;
 @Deprecated
 public class SNPpair {
 
-    private String referenceA;
-    private int positionA;
-    private String referenceB;
-    private int positionB;
+    private final String referenceA;
+    private final int positionA;
+    private final String referenceB;
+    private final int positionB;
 
     /**
      * Counts for AB, Ab and ab, respectively
      * ab can be computed with totalCounts-sum(counts)
      */
-    private int[] counts;
+    private final int[] counts;
 
     /**
      * Total counts (without missing)
@@ -65,7 +65,7 @@ public class SNPpair {
      * @param genotype1 the first genotype
      * @param variant2  the second genotype
      */
-    public SNPpair(LightGenotype genotype1, VariantContext variant2) {
+    public SNPpair(final LightGenotype genotype1, final VariantContext variant2) {
         this(genotype1, new LightGenotype(variant2));
     }
 
@@ -75,7 +75,7 @@ public class SNPpair {
      * @param variant1 the first genotype
      * @param variant2 the second genotype
      */
-    public SNPpair(VariantContext variant1, VariantContext variant2) {
+    public SNPpair(final VariantContext variant1, final VariantContext variant2) {
         this(new LightGenotype(variant1), variant2);
     }
 
@@ -85,7 +85,7 @@ public class SNPpair {
      * @param genotype1 the first genotype
      * @param genotype2 the second genotype
      */
-    public SNPpair(LightGenotype genotype1, LightGenotype genotype2) {
+    public SNPpair(final LightGenotype genotype1, final LightGenotype genotype2) {
         if (genotype1.size() != genotype2.size()) {
             throw new IllegalArgumentException(
                     "Cannot initialize a SNPpair with genoptypes with differen lengths");
@@ -147,7 +147,7 @@ public class SNPpair {
      * @param index1 the first genotype to swap
      * @param index2 the second genotype to swap
      */
-    private void swap(int index1, int index2) {
+    private void swap(final int index1, final int index2) {
         final int temp = counts[index1];
         counts[index1] = counts[index2];
         counts[index2] = temp;
