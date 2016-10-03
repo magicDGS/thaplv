@@ -41,13 +41,15 @@ import java.util.Arrays;
  */
 public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
 
+    private static final String inputVCF = getCommonTestFile("small.vcf").getAbsolutePath();
+
     @Test
     public void testConvertHaplotypesHaploid() throws IOException {
         final IntegrationTestSpec testSpec = new IntegrationTestSpec(
-                " -V " + getTestDataDir() + "example.vcf"
+                " -V " + inputVCF
                         + " -H HAPLOID"
                         + " -O %s",
-                Arrays.asList(getTestDataDir() + "example_haploid.vcf")
+                Arrays.asList(getTestFile("example_haploid.vcf").getAbsolutePath())
         );
         testSpec.executeTest("testConvertHaplotypesHaploid", this);
     }
@@ -55,11 +57,11 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
     @Test
     public void testConvertHaplotypesOutputPloidy1() throws IOException {
         final IntegrationTestSpec testSpec = new IntegrationTestSpec(
-                " -V " + getTestDataDir() + "example.vcf"
+                " -V " + inputVCF
                         + " -H HAPLOID"
                         + " -ploidy 1"
                         + " -O %s",
-                Arrays.asList(getTestDataDir() + "example_haploid_1.vcf")
+                Arrays.asList(getTestFile("example_haploid_1.vcf").getAbsolutePath())
         );
         testSpec.executeTest("testConvertHaplotypesOutputPloidy1", this);
     }
@@ -67,11 +69,10 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
     @Test
     public void testConvertHaplotypesBackCross() throws IOException {
         final IntegrationTestSpec testSpec = new IntegrationTestSpec(
-                " -V " + getTestDataDir() + "example.vcf"
+                " -V " + inputVCF
                         + " -H BACK_CROSS"
                         + " -O %s",
-                Arrays.asList(getTestDataDir()
-                        + "example_backcross.vcf")
+                Arrays.asList(getTestFile("example_backcross.vcf").getAbsolutePath())
         );
         testSpec.executeTest("testConvertHaplotypesBackCross", this);
     }
@@ -80,7 +81,7 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
     public void testConvertHaplotypesDontCheckError() throws IOException {
         final IntegrationTestSpec testSpec = new IntegrationTestSpec(
                 " -H DONT_CHECK"
-                        + " -V " + getTestDataDir() + "example.vcf"
+                        + " -V " + inputVCF
                         + " -O %s",
                 1,
                 UserException.class
@@ -93,7 +94,7 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
         final IntegrationTestSpec testSpec = new IntegrationTestSpec(
                 " -H HAPLOID"
                         + " -ploidy 10"
-                        + " -V " + getTestDataDir() + "example.vcf"
+                        + " -V " + inputVCF
                         + " -O %s",
                 1,
                 UserException.class

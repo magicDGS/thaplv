@@ -27,6 +27,8 @@
 
 package org.magicdgs.thaplv.utils.test;
 
+import org.magicdgs.thaplv.Main;
+
 import htsjdk.samtools.util.Log;
 import htsjdk.variant.variantcontext.Genotype;
 import org.apache.logging.log4j.LogManager;
@@ -89,7 +91,20 @@ public abstract class BaseTest {
 
     /** Reference genome from the D. simulans chromosome arm 2L */
     public static final File DROSOPHILA_SIMULANS_2L_REFERENCE =
-            new File(TEST_ROOT_FILE_DIRECTORY + "org/magicdgs/thaplv/drosophila.2L.fa");
+            getCommonTestFile("drosophila.2L.fa");
+
+    /**
+     * Get a test file resolved using the project common directory.
+     *
+     * @param fileName the name of a file.
+     *
+     * @return the test file.
+     */
+    public static File getCommonTestFile(final String fileName) {
+        return new File(
+                TEST_ROOT_FILE_DIRECTORY + Main.class.getPackage().getName().replace(".", "/"),
+                fileName);
+    }
 
     /**
      * Get a test file resolved using {@link #getTestDataDir()} as the parent
@@ -98,7 +113,7 @@ public abstract class BaseTest {
      *
      * @return the test file
      */
-    public File getTestFile(String fileName) {
+    public File getTestFile(final String fileName) {
         return new File(getTestDataDir(), fileName);
     }
 

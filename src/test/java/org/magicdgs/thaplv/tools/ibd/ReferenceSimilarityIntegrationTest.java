@@ -46,15 +46,11 @@ public class ReferenceSimilarityIntegrationTest extends CommandLineProgramTest {
 
     private static final String expectedPrefix = "expected";
 
-    private final File vcfTestInput =
-            new File(new File(getTestDataDir()).getParentFile().getAbsolutePath()
-                    + "/" + IBDcompute.class.getSimpleName() + "/example.vcf.gz");
-
     @Test
     public void testReferenceSimilarity() throws Exception {
         final File tmpDir = BaseTest.createTempDir("referenceSimilarity");
         final ArgumentsBuilder arguments = IBDcomputeIntegrationTest
-                .getReferenceAndHaplotypeModelForIBDCompute().addVCF(vcfTestInput);
+                .getBaseArgumentsForIBDCompute();
         arguments.addBooleanArgument("output-differences", true);
         // the output
         final String outputPrefix = "testReferenceSimilarity";
@@ -75,7 +71,7 @@ public class ReferenceSimilarityIntegrationTest extends CommandLineProgramTest {
     public void testIBDcomputeCombiningWindows() throws Exception {
         final File tmpDir = BaseTest.createTempDir("ibdCompute");
         final ArgumentsBuilder arguments = IBDcomputeIntegrationTest
-                .getReferenceAndHaplotypeModelForIBDCompute().addVCF(vcfTestInput);
+                .getBaseArgumentsForIBDCompute();
         // the window-size
         arguments.addArgument(ThaplvArgumentDefinitions.WINDOW_SIZE_LONG, "200")
                 .addArgument(ThaplvArgumentDefinitions.WINDOW_STEP_LONG, "100");
