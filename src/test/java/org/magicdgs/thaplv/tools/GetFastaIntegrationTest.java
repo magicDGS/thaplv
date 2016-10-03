@@ -29,7 +29,6 @@ package org.magicdgs.thaplv.tools;
 
 
 import org.magicdgs.thaplv.cmd.ThaplvArgumentDefinitions;
-import org.magicdgs.thaplv.utils.test.BaseTest;
 import org.magicdgs.thaplv.utils.test.CommandLineProgramTest;
 
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
@@ -49,25 +48,21 @@ public class GetFastaIntegrationTest extends CommandLineProgramTest {
     @Test
     public void testGetFasta() throws IOException {
         final String[] samples = {"sample1", "sample2"};
-        final File tmpDir = BaseTest.createTempDir("getFasta");
-        final ArgumentsBuilder arguments = new ArgumentsBuilder();
-        // add the input
-        arguments.addVCF(new File(TEST_ROOT_FILE_DIRECTORY
-                + this.getClass().getPackage().getName().replace(".", "/")
-                + "/ConvertHaplotypes/example.vcf"));
-        // add the reference
-        arguments.addReference(DROSOPHILA_SIMULANS_2L_REFERENCE);
-        // add the model
-        arguments.addArgument(ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG, "HAPLOID");
-        // the output
-        arguments.addArgument(StandardArgumentDefinitions.OUTPUT_LONG_NAME, tmpDir.getAbsolutePath() + "/");
+        final File tmpDir = createTempDir("getFasta");
+        final ArgumentsBuilder arguments = new ArgumentsBuilder()
+                .addVCF(getCommonTestFile("small.vcf")) // ¡input
+                .addReference(DROSOPHILA_SIMULANS_2L_REFERENCE) // reference
+                .addArgument(ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG, "HAPLOID") // model
+                .addArgument(StandardArgumentDefinitions.OUTPUT_LONG_NAME,
+                        tmpDir.getAbsolutePath() + "/"); // output
         // run command line
         // TODO: this test takes a long time, because the current implementation does not allow
         // TODO: output only a region. This implementation should be changed
         runCommandLine(arguments);
         for (final String sampl : samples) {
             final File sampleFile = new File(tmpDir, sampl + ".fasta");
-            Assert.assertTrue(sampleFile.exists(), "output file does not exists: " + sampleFile.toString());
+            Assert.assertTrue(sampleFile.exists(),
+                    "output file does not exists: " + sampleFile.toString());
             IntegrationTestSpec.assertEqualTextFiles(
                     sampleFile, getTestFile("expected_haploid." + sampl + ".fasta"));
         }

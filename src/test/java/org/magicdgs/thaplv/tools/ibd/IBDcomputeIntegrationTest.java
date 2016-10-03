@@ -47,15 +47,11 @@ public class IBDcomputeIntegrationTest extends CommandLineProgramTest {
 
     private static final String expectedPrefix = "expected";
 
-    /** Base arguments for the reference and the haploid model */
-    static ArgumentsBuilder getReferenceAndHaplotypeModelForIBDCompute() {
+    /** Base arguments for the IBD computation tests. */
+    static ArgumentsBuilder getBaseArgumentsForIBDCompute() {
         return new ArgumentsBuilder().addReference(DROSOPHILA_SIMULANS_2L_REFERENCE)
-                .addArgument(ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG, "HAPLOID");
-    }
-
-    /** Base arguments includes the example.vcf, the reference and the haploid model */
-    private ArgumentsBuilder getBaseArgumentsForIBDCompute() {
-        return getReferenceAndHaplotypeModelForIBDCompute().addVCF(getTestFile("example.vcf.gz"));
+                .addArgument(ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG, "HAPLOID")
+                .addVCF(getCommonTestFile("10samples.vcf.gz"));
     }
 
     @Test
