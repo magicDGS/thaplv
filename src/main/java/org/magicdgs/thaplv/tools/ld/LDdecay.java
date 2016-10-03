@@ -27,14 +27,18 @@
 
 package org.magicdgs.thaplv.tools.ld;
 
-import org.magicdgs.thaplv.cmd.ThaplvArgumentDefinitions;
+import org.magicdgs.thaplv.cmd.argumentcollections.LengthBinningArgumentCollection;
+import org.magicdgs.thaplv.cmd.argumentcollections.MultiThreadComputationArgumentCollection;
 import org.magicdgs.thaplv.cmd.programgroups.AlphaProgramGroup;
 import org.magicdgs.thaplv.haplotypes.filters.HaplotypeFilterLibrary;
 import org.magicdgs.thaplv.haplotypes.filters.NumberOfMissingFilter;
+import org.magicdgs.thaplv.tools.ld.engine.LDdecayOutput;
 import org.magicdgs.thaplv.tools.ld.engine.QueueLD;
 
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.hellbender.cmdline.Argument;
+import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.engine.FeatureContext;
@@ -44,60 +48,50 @@ import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.engine.filters.VariantFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
 
-import java.io.IOException;
-
 /**
- * Class to compute LD in bins in a concurrent way
- * (1.5 million variants)
- * TODO: implement minor allele frequency
- * TODO: unit tests
- * TODO: better documentation
+ * Computes linkage disequilibrium statistics (based on Pearson's correlation r<sup>2</sup>)
+ * binning
+ * on the fly to avoid storing results. In addition, the computation is filtered by the maximum
+ * r<sup>2</sup> that can be reached between pairs.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-@CommandLineProgramProperties(oneLineSummary = "Compute and bin different linkage disequilibrium statistics",
-        // TODO: better description
-        summary = "Compute and bin different linkage disequilibrium statistics. Median and quantiles are an approximation",
+@CommandLineProgramProperties(oneLineSummary = "Computes binned linkage disequilibrium statistics.",
+        summary =
+                "Computes and bin different linkage disequilibrium statistics based on Pearson's correlation. "
+                        + "It computes average and standard deviation for each bin, and approximation for the median and quantiles. "
+                        + "The statistics will be only computed if the maximum correlation could reach a significant value based on the chi-square distribution. "
+                        + "In addition, only biallelic SNPs that pass the imposed filters (after removing missing data) wil be used.",
         programGroup = AlphaProgramGroup.class)
 public final class LDdecay extends HaploidWalker {
+
+    @VisibleForTesting
+    static final String CHI_SQR_QUANTILE_ARGNAME = "chi-square";
+    @VisibleForTesting
+    static final String MINIMUM_SAMPLES_ARGNAME = "minimum-samples";
+    @VisibleForTesting
+    static final String INCLUDE_SINGLETONS_ARGNAME = "include-singletons";
+
 
     @Argument(fullName = StandardArgumentDefinitions.OUTPUT_LONG_NAME, shortName = StandardArgumentDefinitions.OUTPUT_SHORT_NAME, doc = "Output prefix for LD results.", optional = false)
     public String outputPrefix;
 
-    @Argument(fullName = "minimum-distance", shortName = "mindist", doc = "Minimum distance (in bp, inclusive) between SNPs to compute LD.", optional = true)
-    public int min = 0;
+    @ArgumentCollection(doc = "Binning parameters")
+    public LengthBinningArgumentCollection lengthBinningArgumentCollection =
+            new LengthBinningArgumentCollection(0, 10_000, 1_000);
 
-    // TODO: is this inclusive or exclusive???
-    // TODO: change this to set to null for compute all the chromosome
-    @Argument(fullName = "maximum-distance", shortName = "maxdist", doc = "Maximum distance (in bp) between SNPs to compute LD. If set to < 1, compute all the SNPs within the chromosome for minimum distance.", optional = true)
-    public int max = 10_000;
+    @ArgumentCollection
+    public MultiThreadComputationArgumentCollection multiThreadArgumentCollection =
+            new MultiThreadComputationArgumentCollection();
 
-    @Argument(fullName = "bin-distance", shortName = "bindist", doc = "Distance (in bp) between pairs to be considered in the same bin.", optional = true)
-    public int binDistance = 1_000;
-
-    @Argument(fullName = "chi-square", shortName = "chi", doc = "Chi-square quantile to assess the significance of max. correlation and compute LD.", optional = true)
+    @Argument(fullName = CHI_SQR_QUANTILE_ARGNAME, doc = "Chi-square quantile to assess the significance of max. correlation and compute LD.", optional = true)
     public double chiSqrQuantile = 0.95;
 
-    // TODO: change this to set to null for use only no-missing data
-    // TODO: change the name
-    @Argument(fullName = "minimum-samples", shortName = "mins", doc = "Minimum number of samples available to compute LD. Setting to a negative number only use no-missing data.", optional = true)
-    public int minSamples = -1; // TODO: change default value
+    @Argument(fullName = MINIMUM_SAMPLES_ARGNAME, doc = "Minimum number of samples available to compute LD. Setting to null only use no-missing data.", optional = true)
+    public Integer minSamples = null;
 
-    // TODO: change logic, always remove them except requested
-    @Argument(fullName = "remove-singletons", shortName = "rms", doc = "Remove pairs where the minor variant is a singleton.", optional = true)
-    public boolean rmSingletons = false;
-
-    // TODO: add option for minimum allele frequency
-    // @Argument(fullName = "minimum-allele-frequency", shortName = "maf", doc = "Minimum allele frequency for a marker to compute LD.", optional = true)
-    // public Double maf = null;
-
-    // TODO: add option for only output binned results
-    // TODO: probably much better the other way around -> option for output all pairs
-    // @Argument(fullName = "only-bin", shortName = "bin", doc = "Output only binned results.", optional = true)
-    // public boolean onyBin = false;
-
-    @Argument(fullName = ThaplvArgumentDefinitions.NUMBER_OF_THREAD_LONG, shortName = ThaplvArgumentDefinitions.NUMBER_OF_THREAD_SHORT, doc = "Number of threads to use in the computation.", optional = true)
-    public int nThreads = 1;
+    @Argument(fullName = INCLUDE_SINGLETONS_ARGNAME, doc = "Include pairs where the minor variant is a singleton if it fullfit the requirements.", optional = true)
+    public boolean includeSingletons = false;
 
     @Override
     protected boolean requiresOutputPloidy() {
@@ -112,73 +106,91 @@ public final class LDdecay extends HaploidWalker {
     // this is the queue for store the ld results
     private QueueLD queue;
 
+    // number of variants processed
+    private int nVariants = 0;
 
+    // this filter is important to avoid computation/loading in the queue the variants
     @Override
     protected VariantFilter makeVariantFilter() {
         // this is already removing invariant sites
         VariantFilter filter = HaplotypeFilterLibrary.BIALLELIC_FILTER;
-        if (rmSingletons) { // TODO: this should change with the parameter
+        if (includeSingletons) {
+            logger.info("Singletons will be included.");
+            logger.warn("Including singletons in the analysis may lead to spurious results.");
+        } else {
+            logger.info("Singletons will be excluded.");
             filter = filter.and(HaplotypeFilterLibrary.NO_SINGLETON_FILTER);
         }
-        if (minSamples == -1) { // TODO: this should change with the parameter
-            // TODO: I don't know if this is working as expected
-            filter = filter.and(new NumberOfMissingFilter(minSamples));
-        }
-        // TODO: the maf threshold should be here
+        logger.info("Variants with less than {} samples with missing genotypes will be excluded.",
+                minSamples);
+        filter = filter.and(new NumberOfMissingFilter(minSamples));
         return filter;
     }
 
-    // TODO: change messages and validation of args
     @Override
     public void onTraversalStart() {
-        if (chiSqrQuantile < 0 || chiSqrQuantile >= 1) {
-            throw new UserException.BadArgumentValue("Chi-square quantile should be in the range (0, 1)");
+        // check and change the samples arguments
+        final int nSamples = getHeaderForVariants().getNGenotypeSamples();
+        if (minSamples == null) {
+            minSamples = nSamples;
+        } else {
+            minSamples = Math.min(minSamples, nSamples);
         }
-        if (nThreads < 1) {
-            throw new UserException.BadArgumentValue("Threads cannot be less than 1");
-        }
-        if (minSamples < 1) {
-            throw new UserException.BadArgumentValue("Minimum samples cannot be smaller than 1");
-        }
-        if (binDistance < 1) {
-            throw new UserException.BadArgumentValue("Bin length cannot be smaller than 1");
-        }
-        if (max > 0 && min > max) {
-            throw new UserException.BadArgumentValue(
-                    "Minimum distance between markers cannot be bigger than maximum distance");
-        } else if (min < 0) {
-            throw new UserException.BadArgumentValue(
-                    "Minimum distance between markers cannot be negative");
-        }
+
+        // validate the arguments
+        validateArgs();
+        lengthBinningArgumentCollection.logWarnings(logger);
 
         // warnings
         if (chiSqrQuantile == 0) {
             logger.warn(
-                    "Computation for r2 will be performed for all maximum r2 independently of its value (except for 0) because the chi-square quantile is set to 0");
-        }
-        if (max < 1 && min == 0) {
-            logger.info("All variants within the chromosome will be used to compute LD");
-        } else {
-            logger.info(
-                    "Only variants with a distance between them in the range [{},{}] bp will be considered.",
-                    min, (max < 1) ? "chromosome lenght" : max);
+                    "All variant pairs will be included in the analysis because chi-square quantile is set to 0.");
         }
 
+        // create queue
+        final LDdecayOutput output =
+                new LDdecayOutput(outputPrefix, lengthBinningArgumentCollection.binDistance);
+        queue = new QueueLD(output, lengthBinningArgumentCollection, minSamples, !includeSingletons,
+                chiSqrQuantile, multiThreadArgumentCollection);
+    }
 
-        queue = new QueueLD(outputPrefix, binDistance, min, max, minSamples,
-                rmSingletons, chiSqrQuantile, nThreads, logger);
+    private void validateArgs() {
+        if (chiSqrQuantile < 0 || chiSqrQuantile >= 1) {
+            throw new UserException.BadArgumentValue(CHI_SQR_QUANTILE_ARGNAME,
+                    String.valueOf(chiSqrQuantile), "should be in the range (0, 1)");
+        }
+        if (minSamples < 1) {
+            throw new UserException.BadArgumentValue(MINIMUM_SAMPLES_ARGNAME,
+                    String.valueOf(minSamples), "should be a positive integer");
+        }
+        lengthBinningArgumentCollection.validateArgs();
     }
 
     @Override
     public void apply(VariantContext variant, ReadsContext readsContext,
             ReferenceContext referenceContext, FeatureContext featureContext) {
-        try {
-            // TODO: debugging the variants in RAM was done before here
-            // TODO: implement it inside the queue will be better
-            queue.add(variant);
-        } catch (IOException e) {
-            // TODO: change exception handling
-            throw new UserException(e.getMessage(), e);
+        queue.add(variant);
+        if (++nVariants % 1000 == 0) {
+            logger.debug("Number of variants in RAM: {}; Number of pairs computed: {}.",
+                    () -> queue.variantsInRam(), () -> queue.computedPairs());
+
+        }
+    }
+
+    /** This return the number of pairs computed. */
+    @Override
+    public Object onTraversalSuccess() {
+        queue.finalizeQueue();
+        final int computedPairs = queue.computedPairs();
+        logger.info("Computed linkage disequilibrium statistics on {} pairs out of {}.",
+                () -> computedPairs, () -> queue.addedPairs());
+        return computedPairs;
+    }
+
+    @Override
+    public void closeTool() {
+        if (queue != null) {
+            queue.close();
         }
     }
 }

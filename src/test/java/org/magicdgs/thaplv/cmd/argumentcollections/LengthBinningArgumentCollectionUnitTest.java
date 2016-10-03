@@ -25,51 +25,47 @@
  *
  */
 
-package org.magicdgs.thaplv.tools.ld.engine;
+package org.magicdgs.thaplv.cmd.argumentcollections;
 
-import org.magicdgs.thaplv.utils.stats.LengthBinning;
+import org.magicdgs.thaplv.utils.test.BaseTest;
 
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DecimalFormat;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 /**
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-public class BinLDwriter implements Closeable {
+public class LengthBinningArgumentCollectionUnitTest extends BaseTest {
 
-    private BufferedWriter[] writers;
-    // format for the values
-    private static DecimalFormat roundedFormat = new DecimalFormat("#.#######");
 
-    public BinLDwriter(String outputPrefix, LDbinning emptyBins) throws IOException {
-        writers = new BufferedWriter[LDbinning.statsToBin.size()];
-        for (int i = 0; i < LDbinning.statsToBin.size(); i++) {
-            writers[i] = new BufferedWriter(new FileWriter(
-                    String.format("%s.%s", outputPrefix, LDbinning.statsToBin.get(i))));
-            writers[i].write("chr\t");
-            writers[i].write(emptyBins.getBin(i).formatHeaderBins());
-            writers[i].newLine();
-        }
+    @DataProvider(name = "badArguments")
+    public Object[][] getBadArguments() {
+        return new Object[][] {
+                {-1, 1, 1},
+                {2, 1, 1},
+                {0, 1, -1}
+        };
     }
 
-    public void write(String contig, LDbinning bins) throws IOException {
-        for (int i = 0; i < LDbinning.statsToBin.size(); i++) {
-            // get the length binning
-            LengthBinning lb = bins.getBin(i);
-            writers[i].write(contig);
-            writers[i].write('\t');
-            writers[i].write(lb.formatBins(roundedFormat));
-        }
-
+    @Test(dataProvider = "badArguments", expectedExceptions = IllegalArgumentException.class)
+    public void testBadArguments(final int min, final Integer max, final int binDistance) {
+        new LengthBinningArgumentCollection(min, max, binDistance);
     }
 
-    @Override
-    public void close() throws IOException {
-        for (BufferedWriter w : writers) {
-            w.close();
-        }
+    @DataProvider(name = "correctArguments")
+    public Object[][] getBinningArguments() {
+        return new Object[][] {
+                {0, 10, 1},
+                {10, null, 10},
+                {0, 10, 10},
+                {10, null, 2}
+        };
     }
+
+    @Test(dataProvider = "correctArguments")
+    public void testBinningArguments(final int min, final Integer max, final int binDistance)
+            throws Exception {
+        new LengthBinningArgumentCollection(min, max, binDistance);
+    }
+
 }

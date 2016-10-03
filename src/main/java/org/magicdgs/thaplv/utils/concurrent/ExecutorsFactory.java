@@ -45,8 +45,6 @@ public class ExecutorsFactory {
     /** Cannot be instantiated. */
     private ExecutorsFactory() {}
 
-    ;
-
     /**
      * Creates a fixed thread pool {@link java.util.concurrent.Executors#newFixedThreadPool}
      * with {@code nThreads} and a bounded working queue where rejected jobs will be added
