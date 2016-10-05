@@ -27,9 +27,9 @@
 
 package org.magicdgs.thaplv.utils.stats.knn;
 
+import org.magicdgs.thaplv.haplotypes.pairs.DistancePair;
+
 import htsjdk.samtools.util.Log;
-import org.vetmeduni.thaplv.haplotypes.differences.DistancePair;
-import org.vetmeduni.thaplv.utils.Formats;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 /**
  * Class for storing KNN results
  *
- * @author Daniel Gómez-Sánchez
+ * @author Daniel Gomez-Sanchez (magicDGS)
  */
 public class KNNresult<DistanceType extends DistancePair> {
 
@@ -159,8 +159,7 @@ public class KNNresult<DistanceType extends DistancePair> {
 
     @Override
     public String toString() {
-        return String.format("%s %s-NN result: %s [%s,%s]", sampleName, K,
-                Formats.round(getkNearestDistance()),
-                Formats.round(minimumPossibleDistance), Formats.round(maximumPossibleDistance));
+        return String.format("%s %s-NN result: %s [%s,%s]", sampleName, K, getkNearestDistance(),
+                minimumPossibleDistance, maximumPossibleDistance);
     }
 }

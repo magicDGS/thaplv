@@ -30,8 +30,11 @@ package org.magicdgs.thaplv.utils;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -92,6 +95,27 @@ public class AlleleUtils {
         alleles.filter(a -> includeNoCall || a.isCalled()) // filter the no called
                 .forEach(al -> alleleCounts.merge(al, 1, Integer::sum));
         return alleleCounts;
+    }
+
+    /**
+     * Gets the most frequent alleles from a  map for alleles and their counts.
+     *
+     * @param alleleCounts  the allele counts
+     * @param includeNoCall if {@code true} includes the {@link Allele#NO_CALL}
+     *
+     * @return the set with the most frequent alleles
+     */
+    // TODO: add tests
+    public static Set<Allele> getMostFrequentAlleles(final Map<Allele, Integer> alleleCounts,
+            boolean includeNoCall) {
+        int max = alleleCounts.entrySet().stream()
+                .filter(e -> includeNoCall || e.getKey().isCalled()).mapToInt(Map.Entry::getValue)
+                .max().orElse(-1);
+        return (max == -1) ? Collections.emptySet() :
+                alleleCounts.entrySet().stream().filter(e -> e.getValue() == max)
+                        .filter(e -> includeNoCall || e.getKey().isCalled())
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toSet());
     }
 
     /**

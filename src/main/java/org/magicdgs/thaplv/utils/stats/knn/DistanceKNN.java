@@ -27,9 +27,10 @@
 
 package org.magicdgs.thaplv.utils.stats.knn;
 
+import org.magicdgs.thaplv.haplotypes.pairs.DifferencesDistancePair;
+
 import htsjdk.samtools.util.Log;
 import htsjdk.variant.variantcontext.VariantContext;
-import org.vetmeduni.thaplv.haplotypes.differences.DifferencesPair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +43,7 @@ import java.util.stream.Stream;
 /**
  * Simple implementation of K-nearest neighbours for distance between haplotypes
  *
- * @author Daniel Gómez-Sánchez
+ * @author Daniel Gomez-Sanchez (magicDGS)
  */
 public class DistanceKNN {
 
@@ -72,21 +73,20 @@ public class DistanceKNN {
     public KNNresult computeKNN(String sampleName, Set<String> samplesToUse,
             Collection<VariantContext> variants) {
         // initialize the pairs
-        final ArrayList<DifferencesPair> pairs = new ArrayList<>();
+        final ArrayList<DifferencesDistancePair> pairs = new ArrayList<>();
         for (String other : samplesToUse) {
-            final DifferencesPair p = new DifferencesPair(sampleName, other);
+            final DifferencesDistancePair p = new DifferencesDistancePair(sampleName, other);
             for (final VariantContext v : variants) {
                 p.add(v);
             }
             pairs.add(p);
         }
-        return new KNNresult<DifferencesPair>(sampleName, K, 0, variants.size(), pairs);
+        return new KNNresult<DifferencesDistancePair>(sampleName, K, 0, variants.size(), pairs);
     }
 
     /**
      * Get the names for the nearest neighbours using a collection of variants and the distance
-     * computed by {@link
-     * org.vetmeduni.thaplv.haplotypes.differences.DifferencesPair#getDistance()}
+     * computed by {@link DifferencesDistancePair#getDistance()}
      *
      * @param sampleName   the sample to which the KNN should be computed
      * @param samplesToUse the samples agains the sample will be compared
@@ -103,31 +103,32 @@ public class DistanceKNN {
     private Set<String> nearestNeighbours(String sampleName, Set<String> samplesToUse,
             Collection<VariantContext> variants, boolean returnAll) {
         // initialize the pairs
-        final ArrayList<DifferencesPair> pairs = new ArrayList<>();
+        final ArrayList<DifferencesDistancePair> pairs = new ArrayList<>();
         for (String other : samplesToUse) {
-            final DifferencesPair p = new DifferencesPair(sampleName, other);
+            final DifferencesDistancePair p = new DifferencesDistancePair(sampleName, other);
             for (final VariantContext v : variants) {
                 p.add(v);
             }
             pairs.add(p);
         }
         // sort the pairs by the distance
-        DifferencesPair[] sortedByDistance =
-                pairs.stream().sorted(Comparator.comparing(DifferencesPair::getDistance))
-                        .toArray(DifferencesPair[]::new);
+        DifferencesDistancePair[] sortedByDistance =
+                pairs.stream().sorted(Comparator.comparing(DifferencesDistancePair::getDistance))
+                        .toArray(DifferencesDistancePair[]::new);
         // if we are returning every sample for a cutoff
         if (returnAll) {
             // get the maximum distance
             double maxDistance =
-                    Arrays.stream(sortedByDistance).mapToDouble(DifferencesPair::getDistance)
+                    Arrays.stream(sortedByDistance)
+                            .mapToDouble(DifferencesDistancePair::getDistance)
                             .toArray()[K
                             - 1];
             logger.debug("Maximum distance (0-", variants.size(), "] = ", maxDistance);
             return Stream.of(sortedByDistance).filter(p -> p.getDistance() <= maxDistance)
-                    .map(DifferencesPair::getSample2).collect(Collectors.toSet());
+                    .map(DifferencesDistancePair::getSample2).collect(Collectors.toSet());
         }
         // this is not the best approach for imputation, but the best for other issues
-        return Stream.of(sortedByDistance).limit(K).map(DifferencesPair::getSample2)
+        return Stream.of(sortedByDistance).limit(K).map(DifferencesDistancePair::getSample2)
                 .collect(Collectors.toSet());
     }
 
@@ -149,7 +150,8 @@ public class DistanceKNN {
     }
 
     /**
-     * Get the names for the all the nearest neighbours using a collection of variants (based on the
+     * Get the names for the all the nearest neighbours using a collection of variants (based on
+     * the
      * K-nearest neighbour
      * distance)
      *

@@ -27,6 +27,11 @@
 
 package org.magicdgs.thaplv.tools.imputation.engine;
 
+import org.magicdgs.thaplv.haplotypes.pairs.DistancePair;
+import org.magicdgs.thaplv.utils.AlleleUtils;
+import org.magicdgs.thaplv.utils.stats.knn.DistanceKNN;
+import org.magicdgs.thaplv.utils.stats.knn.KNNresult;
+
 import htsjdk.samtools.util.Log;
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.Genotype;
@@ -35,13 +40,10 @@ import htsjdk.variant.variantcontext.GenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.vetmeduni.thaplv.haplotypes.differences.DistancePair;
-import org.vetmeduni.thaplv.stats.knn.DistanceKNN;
-import org.vetmeduni.thaplv.stats.knn.KNNresult;
-import org.vetmeduni.thaplv.utils.htsjdk.AlleleUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -54,7 +56,7 @@ import java.util.stream.Stream;
 /**
  * Collector for variants to be imputed and the imputation process
  *
- * @author Daniel Gómez-Sánchez
+ * @author Daniel Gomez-Sanchez (magicDGS)
  */
 public class ImputationCollector {
 
@@ -186,7 +188,8 @@ public class ImputationCollector {
     }
 
     /**
-     * Iterate over the rest of the variants, imputing till the raw variant list is empty or all the
+     * Iterate over the rest of the variants, imputing till the raw variant list is empty or all
+     * the
      * variants are
      * imputed
      *
@@ -255,7 +258,7 @@ public class ImputationCollector {
 
     /**
      * Impute a variant using {@link #impute(htsjdk.variant.variantcontext.Genotype,
-     * org.vetmeduni.thaplv.stats.knn.KNNresult, htsjdk.variant.variantcontext.VariantContext)}
+     * KNNresult, htsjdk.variant.variantcontext.VariantContext)}
      *
      * @param variant         the variant to impute
      * @param samplesToImpute the samples that should be imputed
@@ -334,8 +337,8 @@ public class ImputationCollector {
             throw new IllegalArgumentException("Something went wrong when imputing");
         }
         final GenotypeBuilder builder = new GenotypeBuilder(genotype);
-        final HashMap<Allele, Integer> counts =
-                AlleleUtils.computeAlleleCounts(neighboursGenotypes);
+        final Map<Allele, Integer> counts = AlleleUtils
+                .getAlleleCounts(neighboursGenotypes.stream().map(g -> g.getAllele(0)), false);
         // add the format if requested
         if (addFormat) {
             // adding the distance for the KNN imputation
@@ -362,7 +365,7 @@ public class ImputationCollector {
                     variant.getStart(), " for ",
                     genotype.getSampleName());
             // compute the most frequent alleles
-            Set<Allele> frequentAlleles = AlleleUtils.getMostFrequentAlleles(counts);
+            Set<Allele> frequentAlleles = AlleleUtils.getMostFrequentAlleles(counts, false);
             logger.debug("Found ", frequentAlleles.size(), " frequent alleles");
             bestAlleles.retainAll(frequentAlleles);
             if (bestAlleles.size() != 1) {
@@ -372,8 +375,8 @@ public class ImputationCollector {
                 return builder.make();
             }
         }
-        return builder.alleles(
-                AlleleUtils.duplicateByPloidy(bestAlleles.iterator().next(), genotype.getPloidy()))
+        return builder
+                .alleles(Collections.nCopies(genotype.getPloidy(), bestAlleles.iterator().next()))
                 .make();
     }
 
@@ -397,7 +400,7 @@ public class ImputationCollector {
         // get the variants that should be used to compute distances
         final ArrayList<VariantContext> inWindow;
         final Allele allSamplesAllele;
-        final HashMap<Allele, Integer> alleleCounts;
+        final Map<Allele, Integer> alleleCounts;
         if (computeNeighbours) {
             allSamplesAllele = null;
             inWindow = getVariantsInWindow(variant);
@@ -409,8 +412,9 @@ public class ImputationCollector {
             }
             alleleCounts = null;
         } else {
-            alleleCounts = AlleleUtils.computeAlleleCounts(variant.getGenotypes(samplesToUse));
-            final Set<Allele> alleleSet = AlleleUtils.getMostFrequentAlleles(alleleCounts);
+            alleleCounts = AlleleUtils.getAlleleCounts(
+                    variant.getGenotypes(samplesToUse).stream().map(g -> g.getAllele(0)), false);
+            final Set<Allele> alleleSet = AlleleUtils.getMostFrequentAlleles(alleleCounts, false);
             // TODO: change this to add the info to the VCF
             logger
                     .warn("Only ", samplesToUse.size(), " samples found at ", variant.getContig(),
@@ -475,9 +479,9 @@ public class ImputationCollector {
     @Deprecated
     private Genotype imputeDeprecated(final Genotype genotype, final Allele allele, Double distance,
             int nNeighbours,
-            int numberOfComparisons, final HashMap<Allele, Integer> counts) {
+            int numberOfComparisons, final Map<Allele, Integer> counts) {
         GenotypeBuilder builder = new GenotypeBuilder(genotype)
-                .alleles(AlleleUtils.duplicateByPloidy(allele, genotype.getPloidy()));
+                .alleles(Collections.nCopies(genotype.getPloidy(), allele));
         if (addFormat) {
             final double frequency = (counts == null || Allele.NO_CALL.equals(allele)) ?
                     Double.NaN :
@@ -506,9 +510,9 @@ public class ImputationCollector {
         logger.debug("Imputing with ", neighbours.size(), "/", knnResult.numberOfComparisons(),
                 " haplotypes: ",
                 Arrays.toString(neighbours.toArray()));
-        final HashMap<Allele, Integer> counts =
-                AlleleUtils.computeAlleleCounts(variant.getGenotypes(neighbours));
-        final Set<Allele> alleleSet = AlleleUtils.getMostFrequentAlleles(counts);
+        final Map<Allele, Integer> counts = AlleleUtils.getAlleleCounts(
+                variant.getGenotypes(neighbours).stream().map(g -> g.getAllele(0)), false);
+        final Set<Allele> alleleSet = AlleleUtils.getMostFrequentAlleles(counts, false);
         if (alleleSet.size() != 1) {
             logger.warn("There is no major allele to impute ", variant.getContig(), ":",
                     variant.getStart(), " for ",

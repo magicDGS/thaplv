@@ -44,7 +44,7 @@ import java.util.Arrays;
 /**
  * Output for the imputation process
  *
- * @author Daniel Gómez-Sánchez
+ * @author Daniel Gomez-Sanchez (magicDGS)
  */
 public class ImputationOutput implements Closeable {
 

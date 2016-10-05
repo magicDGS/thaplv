@@ -27,80 +27,91 @@
 
 package org.magicdgs.thaplv.tools.imputation;
 
-import htsjdk.samtools.util.CloseableIterator;
-import htsjdk.samtools.util.CloserUtil;
+import org.magicdgs.thaplv.cmd.programgroups.AlphaProgramGroup;
+import org.magicdgs.thaplv.tools.imputation.engine.ImputationCollector;
+import org.magicdgs.thaplv.tools.imputation.engine.ImputationOutput;
+
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
-import htsjdk.variant.vcf.VCFFileReader;
 import htsjdk.variant.vcf.VCFHeader;
-import org.vetmeduni.thaplv.cmdline.helpers.AbstractTool;
-import org.vetmeduni.thaplv.tools.imputation.imputer.ImputationCollector;
-import org.vetmeduni.thaplv.tools.imputation.imputer.ImputationOutput;
-import org.vetmeduni.thaplv.utils.VariantLogger;
-import picard.cmdline.CommandLineProgramProperties;
-import picard.cmdline.Option;
-import picard.cmdline.StandardOptionDefinitions;
-import picard.cmdline.programgroups.Alpha;
+import htsjdk.variant.vcf.VCFHeaderLine;
+import org.broadinstitute.hellbender.cmdline.Argument;
+import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
+import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
+import org.broadinstitute.hellbender.engine.FeatureContext;
+import org.broadinstitute.hellbender.engine.HaploidWalker;
+import org.broadinstitute.hellbender.engine.ReadsContext;
+import org.broadinstitute.hellbender.engine.ReferenceContext;
 
 import java.io.File;
 import java.io.IOException;
 
 /**
- * @author Daniel Gómez-Sánchez
+ * @author Daniel Gomez-Sanchez (magicDGS)
  */
 // TODO: add more details to the usage
-@CommandLineProgramProperties(usage = "TODO: KNN method", usageShort = "Impute a VCF file with the KNN algorithm.",
-        programGroup = Alpha.class)
-public class ImputeKNN extends AbstractTool {
+@CommandLineProgramProperties(summary = "TODO: KNN method", oneLineSummary = "Impute a VCF file with the KNN algorithm.",
+        programGroup = AlphaProgramGroup.class)
+public class ImputeKNN extends HaploidWalker {
 
-    @Option(shortName = StandardOptionDefinitions.OUTPUT_SHORT_NAME, doc = "Output imputed VCF file.", maxElements = 1)
+    @Argument(shortName = StandardArgumentDefinitions.OUTPUT_SHORT_NAME, doc = "Output imputed VCF file.")
     public File OUTPUT;
 
-    @Option(shortName = "WS",
+    @Argument(shortName = "WS",
             doc = "Number of base pair upstream/downstream a missing position to use in the imputation.", optional = true)
     public int WINDOW_SIZE = 1000;
 
-    @Option(shortName = "K", doc = "Number of neighbour to use in the KNN algorithm.", optional = true)
+    @Argument(shortName = "K", doc = "Number of neighbour to use in the KNN algorithm.", optional = true)
     public int K_NEIGHBOURS = 5;
-    //	@Option(shortName = "stats", doc="Output imputation statistics", optional = true)
+    //	@Argument(shortName = "stats", doc="Output imputation statistics", optional = true)
     //	public boolean IMPUTATION_STATISTICS = false;
-    //	@Option(shortName = "neigh", doc="Output the neighbours statistics", optional = true)
+    //	@Argument(shortName = "neigh", doc="Output the neighbours statistics", optional = true)
     //	public boolean NEIGHBOURS_STATISTICS = false;
 
-    @Option(shortName = "IMP", doc = "Add IMP format tag with the information for the imputed alleles", optional = true)
+    @Argument(shortName = "IMP", doc = "Add IMP format tag with the information for the imputed alleles", optional = true)
     public boolean IMPUTE_FORMAT = false;
 
+    private ImputationOutput output;
+
     @Override
-    protected int doWork() {
-        try {
-            // initialize the reader
-            final VCFFileReader reader = getHaplotypeReader();
-            final VCFHeader header = new VCFHeader(reader.getFileHeader());
-            final VariantContextWriter writer =
-                    getVariantContextWriter(OUTPUT, header.getSequenceDictionary());
-            // TODO: add command line to the header
-            // get the imputation collector
-            final ImputationCollector collector =
-                    new ImputationCollector(WINDOW_SIZE, K_NEIGHBOURS, IMPUTE_FORMAT);
-            final ImputationOutput output = new ImputationOutput(writer, collector);
-            output.writeHeader(header, IMPUTE_FORMAT);
-            final CloseableIterator<VariantContext> it = getIteratorForReader(reader);
-            // initialize logger
-            final VariantLogger progress = new VariantLogger(logger, 1000);
-            // iterate
-            while (it.hasNext()) {
-                final VariantContext variant = it.next();
-                output.addVariant(variant);
-                progress.variant(variant);
+    protected boolean requiresOutputPloidy() {
+        return true;
+    }
+
+    @Override
+    protected boolean allowsDontCheck() {
+        return true;
+    }
+
+    @Override
+    public void onTraversalStart() {
+        // initialize the writter
+        final VCFHeader header = getHeaderForVariants();
+        header.addMetaDataLine(new VCFHeaderLine("source", this.getClass().getSimpleName()));
+        final VariantContextWriter writer =
+                createVCFWriter(OUTPUT);
+        // TODO: add command line to the header
+        // get the imputation collector
+        final ImputationCollector collector =
+                new ImputationCollector(WINDOW_SIZE, K_NEIGHBOURS, IMPUTE_FORMAT);
+        output = new ImputationOutput(writer, collector);
+        output.writeHeader(header, IMPUTE_FORMAT);
+    }
+
+    @Override
+    public void apply(VariantContext variant, ReadsContext readsContext,
+            ReferenceContext referenceContext, FeatureContext featureContext) {
+        output.addVariant(variant);
+    }
+
+    @Override
+    public void closeTool() {
+        if (output != null) {
+            try {
+                output.close();
+            } catch (IOException e) {
+                // TODO: this should be changed
             }
-            progress.logNumberOfVariantsProcessed();
-            CloserUtil.close(it);
-            CloserUtil.close(reader);
-            output.close();
-            return 0;
-        } catch (IOException e) {
-            logger.error(e, e.getMessage());
-            return 1;
         }
     }
 }
