@@ -30,8 +30,10 @@ package org.magicdgs.thaplv.utils.stats;
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
 import org.apache.commons.math3.stat.descriptive.rank.PSquarePercentile;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * Class for computing running statistics including mean, standard deviation and quantiles (using
@@ -225,6 +227,15 @@ public class RunningStats {
         quantiles.entrySet().stream()
                 .forEach(q -> toReturn.put(q.getKey(), q.getValue().getResult()));
         return toReturn;
+    }
+
+    /**
+     * Gets the list of the computed quantiles, sorted in ascending order.
+     *
+     * Note: this quantiles could be used to retrieve the values.
+     */
+    public final List<Double> computedQuatiles() {
+        return quantiles.keySet().stream().collect(Collectors.toList());
     }
 
     // for testing

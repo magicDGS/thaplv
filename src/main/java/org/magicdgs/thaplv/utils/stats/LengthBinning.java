@@ -30,10 +30,10 @@ package org.magicdgs.thaplv.utils.stats;
 import com.google.common.annotations.VisibleForTesting;
 import org.broadinstitute.hellbender.utils.Utils;
 
-import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.stream.DoubleStream;
 
 /**
  * Class that bin a double based on the length, computing mean, median and quantiles.
@@ -99,41 +99,6 @@ public class LengthBinning {
         }
     }
 
-    /** Returns the string with the representation of the header for a table format of this object. */
-    public String formatHeaderBins() {
-        final StringBuilder builder = new StringBuilder("bin\tn\tmean\tsd\tmedian");
-        for (final double q : quantiles) {
-            builder.append("\tq");
-            builder.append(q / 100);
-        }
-        return builder.toString();
-    }
-
-    /** Format the bins stored in this object. */
-    public synchronized String formatBins(final DecimalFormat digits) {
-        final StringBuilder builder = new StringBuilder();
-        binStat.entrySet().stream().filter(bin -> bin.getValue().numDataValues() != 0)
-                .forEach(bin -> {
-                    builder.append('\t');
-                    builder.append(bin.getKey());
-                    builder.append('\t');
-                    builder.append(bin.getValue().numDataValues());
-                    builder.append('\t');
-                    builder.append(digits.format(bin.getValue().mean()));
-                    builder.append('\t');
-                    builder.append(digits.format(bin.getValue().sampleStandardDeviation()));
-                    builder.append('\t');
-                    builder.append(digits.format(bin.getValue().median()));
-                    builder.append('\t');
-                    for (final double quantile : bin.getValue().getAllQuantiles().values()) {
-                        builder.append(digits.format(quantile));
-                        builder.append('\t');
-                    }
-                    builder.append('\n');
-                });
-        return builder.toString();
-    }
-
     /** Gets the bin for a concrete value. */
     @VisibleForTesting
     static int toBin(final int length, final int binSize) {
@@ -157,6 +122,32 @@ public class LengthBinning {
         return builder.toString();
     }
 
+    /**
+     * Gets the binned statistics for this object. The sorted map will contain all bins until the
+     * next one.
+     *
+     * Note that the object is copied and modifications of the statistics will not be reflected in
+     * this instance. Every time that the method is called it generates a new map.
+     *
+     * @return a copy of the binned statistics (including 0-element ones); emty map if {@link
+     * #isEmpty()} is {@code true}.
+     */
+    public synchronized SortedMap<Integer, RunningStats> getBinStats() {
+        final SortedMap<Integer, RunningStats> toReturn = new TreeMap<>();
+        if (!isEmpty()) {
+            final int lastBin = binStat.lastKey();
+            for (int i = binSize; i <= lastBin; i += binSize) {
+                final RunningStats stats = binStat.getOrDefault(i, new RunningStats(quantiles));
+                toReturn.put(i, stats);
+            }
+        }
+        return toReturn;
+    }
+
+    /** Returns a fresh array with the quantiles computed for the statistics. */
+    public double[] getQuantiles() {
+        return DoubleStream.of(quantiles).toArray();
+    }
 
     /**
      * Clear all the statistics computed.
