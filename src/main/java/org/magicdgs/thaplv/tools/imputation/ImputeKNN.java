@@ -55,21 +55,21 @@ import java.io.IOException;
 public class ImputeKNN extends HaploidWalker {
 
     @Argument(shortName = StandardArgumentDefinitions.OUTPUT_SHORT_NAME, doc = "Output imputed VCF file.")
-    public File OUTPUT;
+    public File outputFile;
 
     @Argument(shortName = "WS",
             doc = "Number of base pair upstream/downstream a missing position to use in the imputation.", optional = true)
-    public int WINDOW_SIZE = 1000;
+    public int windowSize = 1000;
 
     @Argument(shortName = "K", doc = "Number of neighbour to use in the KNN algorithm.", optional = true)
-    public int K_NEIGHBOURS = 5;
+    public int kNeighbours = 5;
     //	@Argument(shortName = "stats", doc="Output imputation statistics", optional = true)
     //	public boolean IMPUTATION_STATISTICS = false;
     //	@Argument(shortName = "neigh", doc="Output the neighbours statistics", optional = true)
     //	public boolean NEIGHBOURS_STATISTICS = false;
 
     @Argument(shortName = "IMP", doc = "Add IMP format tag with the information for the imputed alleles", optional = true)
-    public boolean IMPUTE_FORMAT = false;
+    public boolean imputeFormat = false;
 
     private ImputationOutput output;
 
@@ -89,13 +89,13 @@ public class ImputeKNN extends HaploidWalker {
         final VCFHeader header = getHeaderForVariants();
         header.addMetaDataLine(new VCFHeaderLine("source", this.getClass().getSimpleName()));
         final VariantContextWriter writer =
-                createVCFWriter(OUTPUT);
+                createVCFWriter(outputFile);
         // TODO: add command line to the header
         // get the imputation collector
         final ImputationCollector collector =
-                new ImputationCollector(WINDOW_SIZE, K_NEIGHBOURS, IMPUTE_FORMAT);
+                new ImputationCollector(windowSize, kNeighbours, imputeFormat);
         output = new ImputationOutput(writer, collector);
-        output.writeHeader(header, IMPUTE_FORMAT);
+        output.writeHeader(header, imputeFormat);
     }
 
     @Override

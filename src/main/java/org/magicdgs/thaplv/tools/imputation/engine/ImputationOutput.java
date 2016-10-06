@@ -27,7 +27,6 @@
 
 package org.magicdgs.thaplv.tools.imputation.engine;
 
-import htsjdk.samtools.util.Log;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
 import htsjdk.variant.vcf.VCFFormatHeaderLine;
@@ -40,6 +39,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Output for the imputation process
@@ -48,30 +48,28 @@ import java.util.Arrays;
  */
 public class ImputationOutput implements Closeable {
 
-    private final static Log logger = Log.getInstance(ImputationOutput.class);
-
     private final VariantContextWriter output;
 
     private final ImputationCollector collector;
 
     // TODO: add info
-    protected static VCFFormatHeaderLine knnFormatLine = new VCFFormatHeaderLine(
+    protected static final VCFFormatHeaderLine knnFormatLine = new VCFFormatHeaderLine(
             ImputationCollector.KNN_FORMAT_ID, ImputationCollector.KNN_FORMAT_ORDER.length,
             VCFHeaderLineType.Integer,
             "Used input for imputation for this haplotype: " + Arrays
                     .toString(ImputationCollector.KNN_FORMAT_ORDER)
                     + ". TODO");
 
-    protected static VCFInfoHeaderLine
+    protected static final VCFInfoHeaderLine
             imputedInfoLine = new VCFInfoHeaderLine(ImputationCollector.IMPUTED_INFO_ID, 1,
             VCFHeaderLineType.Integer, "Number of imputed haplotypes");
 
-    protected static VCFFormatHeaderLine distanceFormatLine =
+    protected static final VCFFormatHeaderLine distanceFormatLine =
             new VCFFormatHeaderLine(ImputationCollector.DISTANCE_FORMAT_ID,
                     VCFHeaderLineCount.R, VCFHeaderLineType.Float,
                     "K-Nearest Neighbours average distance for each allele");
 
-    protected static VCFFormatHeaderLine frequencyFormatLine =
+    protected static final VCFFormatHeaderLine frequencyFormatLine =
             new VCFFormatHeaderLine(ImputationCollector.FREQUENCY_FORMAT_ID,
                     VCFHeaderLineCount.R, VCFHeaderLineType.Integer,
                     "K-Nearest Neighbours counts for each allele");
@@ -82,7 +80,8 @@ public class ImputationOutput implements Closeable {
      * @param writer    the write for the results (should be already initialized)
      * @param collector the collector to add the imputation result
      */
-    public ImputationOutput(VariantContextWriter writer, final ImputationCollector collector) {
+    public ImputationOutput(final VariantContextWriter writer,
+            final ImputationCollector collector) {
         this.output = writer;
         this.collector = collector;
     }
@@ -102,7 +101,7 @@ public class ImputationOutput implements Closeable {
      * @param header       the header to print
      * @param imputeFormat if <code>true</code>  imputed samples will have information
      */
-    public void writeHeader(final VCFHeader header, boolean imputeFormat) {
+    public void writeHeader(final VCFHeader header, final boolean imputeFormat) {
         if (imputeFormat) {
             header.addMetaDataLine(distanceFormatLine);
             header.addMetaDataLine(knnFormatLine);
@@ -117,18 +116,18 @@ public class ImputationOutput implements Closeable {
      *
      * @param variant the variant to add
      */
-    public void addVariant(VariantContext variant) {
-        ArrayList<VariantContext> imputed = collector.addVariant(variant);
-        for (VariantContext v : imputed) {
+    public void addVariant(final VariantContext variant) {
+        final List<VariantContext> imputed = collector.addVariant(variant);
+        for (final VariantContext v : imputed) {
             output.add(v);
         }
     }
 
     @Override
     public void close() throws IOException {
-        final ArrayList<VariantContext> last = new ArrayList<>();
+        final List<VariantContext> last = new ArrayList<>();
         collector.finalizeImputation(last);
-        for (VariantContext v : last) {
+        for (final VariantContext v : last) {
             output.add(v);
         }
         output.close();

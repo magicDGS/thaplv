@@ -44,6 +44,7 @@ import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -64,8 +65,9 @@ public class ImputationCollector {
     protected final LinkedList<VariantContext> rawVariantList;
 
     // imputed variants are stored here
-    protected final LinkedList<VariantContext> imputedVariants;
+    protected final Deque<VariantContext> imputedVariants;
 
+    // TODO: this logger should be changed
     protected final Log logger = Log.getInstance(ImputationCollector.class);
 
     protected final int windowSize;
@@ -76,6 +78,8 @@ public class ImputationCollector {
 
     /**
      * The ID for the imputed format in the output VCF
+     *
+     * @deprecated this tag is not going to be used?
      */
     @Deprecated
     public static final String IMPUTED_FORMAT_ID = "IMP";
@@ -126,7 +130,7 @@ public class ImputationCollector {
      * @param K          the number of neighbours to compute the distance
      * @param addFormat  add the format line to the imputed haplotypes
      */
-    public ImputationCollector(int windowSize, int K, boolean addFormat) {
+    public ImputationCollector(final int windowSize, final int K, final boolean addFormat) {
         rawVariantList = new LinkedList<>();
         imputedVariants = new LinkedList<>();
         this.windowSize = windowSize;
@@ -134,7 +138,7 @@ public class ImputationCollector {
         this.addFormat = addFormat;
     }
 
-    public ImputationCollector(int windowSize, int K) {
+    public ImputationCollector(final int windowSize, final int K) {
         this(windowSize, K, false);
     }
 
@@ -145,10 +149,10 @@ public class ImputationCollector {
      *
      * @return list with imputed variants (it could be empty)
      */
-    public ArrayList<VariantContext> addVariant(VariantContext variant) {
+    public List<VariantContext> addVariant(final VariantContext variant) {
         // final VariantContext toAdd = new VariantContextBuilder(variant).attribute(IMPUTED_FORMAT_ID, 0).make();
         // logger.debug("addVariant(", variant.getContig(), ":", variant.getStart(), ") -> ", variant.getAttribute(IMPUTED_FORMAT_ID));
-        final ArrayList<VariantContext> toReturn = new ArrayList<>();
+        final List<VariantContext> toReturn = new ArrayList<>();
         if (rawVariantList.isEmpty()) {
             // logger.debug("Initializing empty raw list with ", variant.getContig(), ":", variant.getStart());
             rawVariantList.add(variant);
@@ -195,7 +199,7 @@ public class ImputationCollector {
      *
      * @param collector it will contain the rest of the variants already imputed
      */
-    public void finalizeImputation(final ArrayList<VariantContext> collector) {
+    public void finalizeImputation(final List<VariantContext> collector) {
         logger
                 .debug("Finalizing. Raw variants: ", rawVariantList.size(), "; Imputed variants: ",
                         imputedVariants.size());
@@ -235,9 +239,9 @@ public class ImputationCollector {
      * @param variant the variant that could be imputed
      */
     private void imputeMaybe(final VariantContext variant) {
-        HashSet<String> samplesToImpute = new HashSet<>();
-        HashSet<String> samplesToUse = new HashSet<>();
-        for (Genotype geno : variant.getGenotypes()) {
+        final Set<String> samplesToImpute = new HashSet<>();
+        final Set<String> samplesToUse = new HashSet<>();
+        for (final Genotype geno : variant.getGenotypes()) {
             if (geno.isNoCall() || !geno.isHom()) {
                 samplesToImpute.add(geno.getSampleName());
             } else {
@@ -266,17 +270,17 @@ public class ImputationCollector {
      *
      * @return the imputed variant; the same variant if no variants are around
      */
-    private VariantContext impute(final VariantContext variant, Set<String> samplesToImpute,
-            Set<String> samplesToUse) {
-        GenotypesContext genotypes = GenotypesContext.create(variant.getNSamples());
-        final ArrayList<VariantContext> inWindow = getVariantsInWindow(variant);
+    private VariantContext impute(final VariantContext variant, final Set<String> samplesToImpute,
+            final Set<String> samplesToUse) {
+        final List<VariantContext> inWindow = getVariantsInWindow(variant);
         if (inWindow.size() == 0) {
             logger.warn("No variants around ", variant.getContig(), ":", variant.getStart(),
                     ". Position won't be imputed");
             return variant;
         }
         int imputed = 0;
-        for (Genotype geno : variant.getGenotypes()) {
+        final GenotypesContext genotypes = GenotypesContext.create(variant.getNSamples());
+        for (final Genotype geno : variant.getGenotypes()) {
             if (samplesToImpute.contains(geno.getSampleName())) {
                 final KNNresult knn =
                         KNNcomputer.computeKNN(geno.getSampleName(), samplesToUse, inWindow);
@@ -309,16 +313,16 @@ public class ImputationCollector {
     private Genotype impute(final Genotype genotype, final KNNresult knnResult,
             final VariantContext variant) {
         // get the neighbours
-        DistancePair[] neighbours = knnResult.getAllNeighboursWithKnearestDistance();
+        final DistancePair[] neighbours = knnResult.getAllNeighboursWithKnearestDistance();
         // get the genotypes for the neighbours
-        GenotypesContext neighboursGenotypes = variant
+        final GenotypesContext neighboursGenotypes = variant
                 .getGenotypes(Stream.of(neighbours).map(DistancePair::getSample2)
                         .collect(Collectors.toSet()));
         logger.debug("Imputing with ", neighbours.length, "/", knnResult.numberOfComparisons(),
                 " haplotypes: ",
                 Arrays.toString(neighboursGenotypes.getSampleNames().toArray()));
-        HashMap<Allele, Mean> alleleScores = new HashMap<>();
-        for (DistancePair n : neighbours) {
+        final Map<Allele, Mean> alleleScores = new HashMap<>();
+        for (final DistancePair n : neighbours) {
             // get the allele for this neighbour
             final Allele a = neighboursGenotypes.get(n.getSample2()).getAllele(0);
             // get the current mean object
@@ -330,7 +334,7 @@ public class ImputationCollector {
             currentMean.increment(n.getDistance());
         }
         // get the minimum value
-        double max = alleleScores.values().stream().mapToDouble(Mean::getResult).min()
+        final double max = alleleScores.values().stream().mapToDouble(Mean::getResult).min()
                 .orElse(Double.NaN);
         if (Double.isNaN(max)) {
             logger.debug("No maximum value for an allele: ", alleleScores);
@@ -346,7 +350,7 @@ public class ImputationCollector {
             final float[] dist = new float[variantAlleles.size()];
             final int[] c = new int[variantAlleles.size()];
             int i = 0;
-            for (Allele al : variantAlleles) {
+            for (final Allele al : variantAlleles) {
                 final Mean mean = alleleScores.get(al);
                 dist[i] = (mean == null) ? Float.NaN : (float) mean.getResult();
                 c[i++] = counts.getOrDefault(al, 0);
@@ -356,7 +360,7 @@ public class ImputationCollector {
                     .attribute(KNN_FORMAT_ID,
                             new int[] {neighbours.length, knnResult.numberOfComparisons()});
         }
-        Set<Allele> bestAlleles =
+        final Set<Allele> bestAlleles =
                 alleleScores.entrySet().stream().filter(e -> e.getValue().getResult() == max)
                         .map(Map.Entry::getKey).collect(Collectors.toSet());
         // if there is no allele closer
@@ -365,7 +369,7 @@ public class ImputationCollector {
                     variant.getStart(), " for ",
                     genotype.getSampleName());
             // compute the most frequent alleles
-            Set<Allele> frequentAlleles = AlleleUtils.getMostFrequentAlleles(counts, false);
+            final Set<Allele> frequentAlleles = AlleleUtils.getMostFrequentAlleles(counts, false);
             logger.debug("Found ", frequentAlleles.size(), " frequent alleles");
             bestAlleles.retainAll(frequentAlleles);
             if (bestAlleles.size() != 1) {
@@ -393,12 +397,11 @@ public class ImputationCollector {
      */
     @Deprecated
     private VariantContext imputeDeprecated(final VariantContext variant,
-            Set<String> samplesToImpute,
-            Set<String> samplesToUse) {
-        GenotypesContext genotypes = GenotypesContext.create(variant.getNSamples());
+            final Set<String> samplesToImpute,
+            final Set<String> samplesToUse) {
         final boolean computeNeighbours = samplesToUse.size() > KNNcomputer.getK();
         // get the variants that should be used to compute distances
-        final ArrayList<VariantContext> inWindow;
+        final List<VariantContext> inWindow;
         final Allele allSamplesAllele;
         final Map<Allele, Integer> alleleCounts;
         if (computeNeighbours) {
@@ -432,10 +435,11 @@ public class ImputationCollector {
             inWindow = null;
         }
         int imputed = 0;
-        for (Genotype geno : variant.getGenotypes()) {
+        final GenotypesContext genotypes = GenotypesContext.create(variant.getNSamples());
+        for (final Genotype geno : variant.getGenotypes()) {
             if (samplesToImpute.contains(geno.getSampleName())) {
                 if (computeNeighbours) {
-                    KNNresult knn =
+                    final KNNresult knn =
                             KNNcomputer.computeKNN(geno.getSampleName(), samplesToUse, inWindow);
                     logger.debug(knn, " at ", variant.getContig(), ":", variant.getStart());
                     final Genotype imputedGenotype = imputeDeprecated(geno, knn, variant);
@@ -477,10 +481,10 @@ public class ImputationCollector {
      * @deprecated implementation using most frequent allele
      */
     @Deprecated
-    private Genotype imputeDeprecated(final Genotype genotype, final Allele allele, Double distance,
-            int nNeighbours,
-            int numberOfComparisons, final Map<Allele, Integer> counts) {
-        GenotypeBuilder builder = new GenotypeBuilder(genotype)
+    private Genotype imputeDeprecated(final Genotype genotype, final Allele allele, final Double distance,
+            final int nNeighbours,
+            final int numberOfComparisons, final Map<Allele, Integer> counts) {
+        final GenotypeBuilder builder = new GenotypeBuilder(genotype)
                 .alleles(Collections.nCopies(genotype.getPloidy(), allele));
         if (addFormat) {
             final double frequency = (counts == null || Allele.NO_CALL.equals(allele)) ?
@@ -504,9 +508,9 @@ public class ImputationCollector {
      * @deprecated implementation using most frequent allele
      */
     @Deprecated
-    private Genotype imputeDeprecated(final Genotype genotype, final KNNresult knnResult,
+    private Genotype imputeDeprecated(final Genotype genotype, final KNNresult<?> knnResult,
             final VariantContext variant) {
-        Set<String> neighbours = knnResult.getAllNeighboursNamesWithKnearest();
+        final Set<String> neighbours = knnResult.getAllNeighboursNamesWithKnearest();
         logger.debug("Imputing with ", neighbours.size(), "/", knnResult.numberOfComparisons(),
                 " haplotypes: ",
                 Arrays.toString(neighbours.toArray()));
@@ -542,9 +546,9 @@ public class ImputationCollector {
      * @deprecated now the attributes are different
      */
     @Deprecated
-    private GenotypeBuilder addAttribute(GenotypeBuilder builder, Number distance,
-            Number nNeighbours,
-            Number numberOfComparisons, Number frequency) {
+    private GenotypeBuilder addAttribute(final GenotypeBuilder builder, final Number distance,
+            final Number nNeighbours,
+            final Number numberOfComparisons, Number frequency) {
         final float[] info = new float[IMPUTED_FORMAT_ORDER_DEPRECATED.length];
         info[0] = distance.floatValue();
         info[1] = nNeighbours.floatValue();
@@ -560,7 +564,7 @@ public class ImputationCollector {
      * @param collector the collector to add the imputed variants to
      */
     private void flushTillVariant(final VariantContext stop,
-            final ArrayList<VariantContext> collector) {
+            final List<VariantContext> collector) {
         // if the not imputed variant is far from the first
         while (!imputedVariants.isEmpty() && !variantsWithinWindow(imputedVariants.peekFirst(),
                 stop)) {
@@ -576,7 +580,7 @@ public class ImputationCollector {
      *
      * @throws IllegalArgumentException if it is called with different sizes in the lists
      */
-    private void flushImputed(ArrayList<VariantContext> collector) {
+    private void flushImputed(final List<VariantContext> collector) {
         if (imputedVariants.size() != rawVariantList.size()) {
             throw new IllegalStateException(
                     "Callign flushImputed() when not all the variants are imputed");
@@ -598,7 +602,7 @@ public class ImputationCollector {
      * @return <code>true</code> if they are only {@link #windowSize} bp appart; <code>false</code>
      * otherwise
      */
-    private boolean variantsWithinWindow(VariantContext variant1, VariantContext variant2) {
+    private boolean variantsWithinWindow(final VariantContext variant1, final VariantContext variant2) {
         // only compare if the chromosomes are equal
         if (variant1.getContig().equals(variant2.getContig())) {
             if (Math.abs(variant1.getStart() - variant2.getStart()) <= windowSize) {
@@ -616,9 +620,9 @@ public class ImputationCollector {
      *
      * @return the list with the variants around the sample
      */
-    private ArrayList<VariantContext> getVariantsInWindow(final VariantContext variant) {
-        final ArrayList<VariantContext> toReturn = new ArrayList<>();
-        for (VariantContext v : rawVariantList) {
+    private List<VariantContext> getVariantsInWindow(final VariantContext variant) {
+        final List<VariantContext> toReturn = new ArrayList<>();
+        for (final VariantContext v : rawVariantList) {
             if (variant.equals(v)) {
                 // this variant is not considered for the distance
             } else if (variantsWithinWindow(v, variant)) {

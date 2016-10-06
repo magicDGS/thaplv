@@ -31,10 +31,10 @@ import org.magicdgs.thaplv.haplotypes.pairs.DistancePair;
 
 import htsjdk.samtools.util.Log;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,8 +44,9 @@ import java.util.stream.Stream;
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
-public class KNNresult<DistanceType extends DistancePair> {
+public class KNNresult<D extends DistancePair> {
 
+    // TODO: this logger should be changed
     private final static Log logger = Log.getInstance(KNNresult.class);
 
     // the sample used to compute the neighbours
@@ -67,7 +68,7 @@ public class KNNresult<DistanceType extends DistancePair> {
     private final DistancePair[] sortedByDistance;
 
     KNNresult(final String sampleName, final int K, final double minimumPossibleDistance,
-            final double maximumPossibleDistance, final ArrayList<DistanceType> pairs) {
+            final double maximumPossibleDistance, final List<D> pairs) {
         this.sampleName = sampleName;
         this.K = K;
         this.kNearestDistance = Double.NaN;
@@ -75,7 +76,7 @@ public class KNNresult<DistanceType extends DistancePair> {
         this.maximumPossibleDistance = maximumPossibleDistance;
         // TODO: this is unchecked, but safe?
         this.sortedByDistance =
-                pairs.stream().sorted(Comparator.comparing(DistanceType::getDistance))
+                pairs.stream().sorted(Comparator.comparing(D::getDistance))
                         .toArray(DistancePair[]::new);
     }
 
@@ -128,6 +129,7 @@ public class KNNresult<DistanceType extends DistancePair> {
                 .toArray(DistancePair[]::new);
     }
 
+    /** @deprecated not used */
     @Deprecated
     public Set<String> getKnearestNeighboursOrLess() {
         // logger.warn("Experimental neirgbours computation: K or less");

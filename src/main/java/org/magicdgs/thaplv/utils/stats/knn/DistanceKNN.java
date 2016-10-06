@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,6 +48,7 @@ import java.util.stream.Stream;
  */
 public class DistanceKNN {
 
+    // TODO: this logger should be changed
     private final static Log logger = Log.getInstance(DistanceKNN.class);
 
     // the number of neighbours
@@ -70,18 +72,18 @@ public class DistanceKNN {
         return K;
     }
 
-    public KNNresult computeKNN(String sampleName, Set<String> samplesToUse,
-            Collection<VariantContext> variants) {
+    public KNNresult computeKNN(final String sampleName, final Set<String> samplesToUse,
+            final Collection<VariantContext> variants) {
         // initialize the pairs
-        final ArrayList<DifferencesDistancePair> pairs = new ArrayList<>();
-        for (String other : samplesToUse) {
+        final List<DifferencesDistancePair> pairs = new ArrayList<>();
+        for (final String other : samplesToUse) {
             final DifferencesDistancePair p = new DifferencesDistancePair(sampleName, other);
             for (final VariantContext v : variants) {
                 p.add(v);
             }
             pairs.add(p);
         }
-        return new KNNresult<DifferencesDistancePair>(sampleName, K, 0, variants.size(), pairs);
+        return new KNNresult<>(sampleName, K, 0, variants.size(), pairs);
     }
 
     /**
@@ -100,11 +102,11 @@ public class DistanceKNN {
      * @deprecated use {@link #computeKNN(String, Set, Collection)} instead
      */
     @Deprecated
-    private Set<String> nearestNeighbours(String sampleName, Set<String> samplesToUse,
-            Collection<VariantContext> variants, boolean returnAll) {
+    private Set<String> nearestNeighbours(final String sampleName, final Set<String> samplesToUse,
+            final Collection<VariantContext> variants, boolean returnAll) {
         // initialize the pairs
         final ArrayList<DifferencesDistancePair> pairs = new ArrayList<>();
-        for (String other : samplesToUse) {
+        for (final String other : samplesToUse) {
             final DifferencesDistancePair p = new DifferencesDistancePair(sampleName, other);
             for (final VariantContext v : variants) {
                 p.add(v);
@@ -112,13 +114,13 @@ public class DistanceKNN {
             pairs.add(p);
         }
         // sort the pairs by the distance
-        DifferencesDistancePair[] sortedByDistance =
+        final DifferencesDistancePair[] sortedByDistance =
                 pairs.stream().sorted(Comparator.comparing(DifferencesDistancePair::getDistance))
                         .toArray(DifferencesDistancePair[]::new);
         // if we are returning every sample for a cutoff
         if (returnAll) {
             // get the maximum distance
-            double maxDistance =
+            final double maxDistance =
                     Arrays.stream(sortedByDistance)
                             .mapToDouble(DifferencesDistancePair::getDistance)
                             .toArray()[K
@@ -144,8 +146,8 @@ public class DistanceKNN {
      * @deprecated use {@link #computeKNN(String, Set, Collection)} instead
      */
     @Deprecated
-    public Set<String> kNearestNeighbours(String sampleName, Set<String> samplesToUse,
-            Collection<VariantContext> variants) {
+    public Set<String> kNearestNeighbours(final String sampleName, final Set<String> samplesToUse,
+            final Collection<VariantContext> variants) {
         return nearestNeighbours(sampleName, samplesToUse, variants, false);
     }
 
@@ -164,8 +166,8 @@ public class DistanceKNN {
      * @deprecated use {@link #computeKNN(String, Set, Collection)} instead
      */
     @Deprecated
-    public Set<String> allNeighbours(String sampleName, Set<String> samplesToUse,
-            Collection<VariantContext> variants) {
+    public Set<String> allNeighbours(final String sampleName, final Set<String> samplesToUse,
+            final Collection<VariantContext> variants) {
         return nearestNeighbours(sampleName, samplesToUse, variants, true);
     }
 

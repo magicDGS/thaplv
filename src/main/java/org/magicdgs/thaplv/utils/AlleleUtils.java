@@ -108,7 +108,7 @@ public class AlleleUtils {
     // TODO: add tests
     public static Set<Allele> getMostFrequentAlleles(final Map<Allele, Integer> alleleCounts,
             boolean includeNoCall) {
-        int max = alleleCounts.entrySet().stream()
+        final int max = alleleCounts.entrySet().stream()
                 .filter(e -> includeNoCall || e.getKey().isCalled()).mapToInt(Map.Entry::getValue)
                 .max().orElse(-1);
         return (max == -1) ? Collections.emptySet() :
