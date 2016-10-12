@@ -36,32 +36,33 @@ import org.broadinstitute.hellbender.cmdline.ArgumentCollectionDefinition;
 import org.broadinstitute.hellbender.exceptions.UserException;
 
 /**
- * Argument collection for haplotype models
+ * Argument collection for haplotype models.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */
 public abstract class HaplotypeModelArgumentCollection implements ArgumentCollectionDefinition {
     private static final long serialVersionUID = 1L;
 
-    private final boolean allowDontCheck;
+    private final boolean allowCheckOnly;
 
-    @Argument(fullName = ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG, shortName = ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_SHORT, doc = "Haplotype model for convert calls.", common = false, optional = true)
+    @Argument(fullName = ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG, shortName = ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_SHORT, doc = "Haplotype model for convert calls. Note that conversion tools does not accept CHECK_ONLY as model.", common = false, optional = true)
     public HaplotypeModel haplotypeModel = HaplotypeModel.HAPLOID;
 
     /**
-     * Constructor for the argument collection
+     * Constructor for the argument collection.
      *
-     * @param allowDontCheck is {@link HaplotypeModel#DONT_CHECK} model allowed?
+     * @param allowCheckOnly {@code true} if {@link HaplotypeModel#CHECK_ONLY} model is allowed;
+     *                       {@code false} otherwise.
      */
-    public HaplotypeModelArgumentCollection(final boolean allowDontCheck) {
-        this.allowDontCheck = allowDontCheck;
+    public HaplotypeModelArgumentCollection(final boolean allowCheckOnly) {
+        this.allowCheckOnly = allowCheckOnly;
     }
 
     /**
-     *  Get the {@link VariantHaplotypeConverter} from the tool, checking for correct parameters
+     * Gets the {@link VariantHaplotypeConverter} from the tool, checking for correct parameters.
      */
     public final VariantHaplotypeConverter getHaplotypeConverter() {
-        if(!allowDontCheck && haplotypeModel == HaplotypeModel.DONT_CHECK) {
+        if (!allowCheckOnly && haplotypeModel == HaplotypeModel.CHECK_ONLY) {
             throw new UserException.BadArgumentValue(ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG,
                     haplotypeModel.toString(),
                     "is not allowed in this tool.");
@@ -70,7 +71,7 @@ public abstract class HaplotypeModelArgumentCollection implements ArgumentCollec
     }
 
     /**
-     * Get the haplotype converter from the arguments
+     * Gets the haplotype converter from the arguments.
      */
     protected abstract VariantHaplotypeConverter haplotypeConverterFromArguments();
 

@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2016, Daniel Gomez-Sanchez <daniel.gomez.sanchez@hotmail> All rights reserved.
  *
@@ -102,7 +101,7 @@ public final class GetFasta extends HaploidWalker {
     }
 
     @Override
-    protected boolean allowsDontCheck() {
+    protected boolean allowsCheckOnly() {
         return true;
     }
 

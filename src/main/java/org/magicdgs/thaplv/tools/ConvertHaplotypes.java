@@ -72,7 +72,7 @@ public final class ConvertHaplotypes extends HaploidWalker {
     }
 
     @Override
-    protected boolean allowsDontCheck() {
+    protected boolean allowsCheckOnly() {
         return false;
     }
 

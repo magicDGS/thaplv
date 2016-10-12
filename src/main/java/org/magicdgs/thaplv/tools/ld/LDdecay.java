@@ -99,7 +99,7 @@ public final class LDdecay extends HaploidWalker {
     }
 
     @Override
-    protected boolean allowsDontCheck() {
+    protected boolean allowsCheckOnly() {
         return true;
     }
 
