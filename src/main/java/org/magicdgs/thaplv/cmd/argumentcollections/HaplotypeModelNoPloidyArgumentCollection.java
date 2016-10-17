@@ -39,14 +39,14 @@ import org.magicdgs.thaplv.haplotypes.model.VariantHaplotypeConverter;
 public class HaplotypeModelNoPloidyArgumentCollection extends HaplotypeModelArgumentCollection {
 
     /**
-     * Constructor for the argument collection
-     *
-     * @param allowDontCheck is {@link HaplotypeModel#DONT_CHECK} model allowed?
+     * @see HaplotypeModelArgumentCollection#HaplotypeModelArgumentCollection(boolean
+     * allowCheckOnly)
      */
-    public HaplotypeModelNoPloidyArgumentCollection(boolean allowDontCheck) {
-        super(allowDontCheck);
+    public HaplotypeModelNoPloidyArgumentCollection(boolean allowCheckOnly) {
+        super(allowCheckOnly);
     }
 
+    /** {@inheritDoc} */
     @Override
     protected VariantHaplotypeConverter haplotypeConverterFromArguments() {
         return HaplotypeModel.getVariantHaplotypeConverter(haplotypeModel, 1);

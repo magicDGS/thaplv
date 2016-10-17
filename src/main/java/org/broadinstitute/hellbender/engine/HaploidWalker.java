@@ -40,11 +40,11 @@ import org.broadinstitute.hellbender.utils.SimpleInterval;
 import java.util.stream.StreamSupport;
 
 /**
- * {@link VariantWalker} that transform the {@link VariantContext} into haploid.
+ * A {@link VariantWalker} that transform the {@link VariantContext} into haploid genotypes.
  *
  * The variants passed to {@link #apply(VariantContext, ReadsContext, ReferenceContext,
- * FeatureContext)} are guarantee to have haploid individuals of undetermined ploidy except if
- * {@link #allowsDontCheck()} is {@code true}. Thus, using the first allele from {@link
+ * FeatureContext)} are guarantee to have haploid individuals of command line ploidy except if
+ * {@link #allowsCheckOnly()} is {@code true}. Thus, using the first allele from {@link
  * htsjdk.variant.variantcontext.Genotype#getAllele(int)} will be enough for compute statistics.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
@@ -55,21 +55,20 @@ public abstract class HaploidWalker extends VariantWalker {
     @ArgumentCollection(doc = "Haplotype models")
     public HaplotypeModelArgumentCollection haplotypeModelArgumentCollection =
             (requiresOutputPloidy())
-                    ? new HaplotypeModelWithPloidyArgumentCollection(allowsDontCheck())
-                    : new HaplotypeModelNoPloidyArgumentCollection(allowsDontCheck());
+                    ? new HaplotypeModelWithPloidyArgumentCollection(allowsCheckOnly())
+                    : new HaplotypeModelNoPloidyArgumentCollection(allowsCheckOnly());
 
     /**
-     * Does this tool requires an output ploidy for output VCF?
-     *
-     * @return {@code true} if it will be output; {@link false} otherwise
+     * Returns {@code true} if the tool requires an output ploidy (e.g., while generating a VCF);
+     * {@code false} otherwise.
      */
     protected abstract boolean requiresOutputPloidy();
 
     /**
-     * Returns {@code true} if {@link org.magicdgs.thaplv.haplotypes.model.HaplotypeModel#DONT_CHECK}
-     * model is allowd; {@link false} otherwise.
+     * Returns {@code true} if {@link org.magicdgs.thaplv.haplotypes.model.HaplotypeModel#CHECK_ONLY}
+     * model is allowed; {@link false} otherwise.
      */
-    protected abstract boolean allowsDontCheck();
+    protected abstract boolean allowsCheckOnly();
 
     /**
      * Implementation of variant-based traversal. Iterates over the variants, converting to

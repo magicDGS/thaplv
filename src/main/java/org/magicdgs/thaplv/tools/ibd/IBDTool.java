@@ -79,7 +79,7 @@ public abstract class IBDTool extends HaploidWalker {
     }
 
     @Override
-    protected boolean allowsDontCheck() {
+    protected boolean allowsCheckOnly() {
         return true;
     }
 

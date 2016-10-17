@@ -30,7 +30,10 @@ package org.magicdgs.thaplv.cmd.programgroups;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgramGroup;
 
 /**
- * Tools for conversion/calling
+ * Tools for conversion/calling.
+ *
+ * Note: Tools extending {@link org.broadinstitute.hellbender.engine.HaploidWalker} annotated with
+ * this program group should not allow {@link org.magicdgs.thaplv.haplotypes.model.HaplotypeModel#CHECK_ONLY}.
  *
  * @author Daniel Gomez-Sanchez (magicDGS)
  */

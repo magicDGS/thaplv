@@ -47,14 +47,14 @@ public class HaplotypeModelWithPloidyArgumentCollection extends HaplotypeModelAr
     public int ploidy = 2;
 
     /**
-     * Constructor for the argument collection
-     *
-     * @param allowDontCheck is {@link HaplotypeModel#DONT_CHECK} model allowed?
+     * @see HaplotypeModelArgumentCollection#HaplotypeModelArgumentCollection(boolean
+     * allowCheckOnly)
      */
-    public HaplotypeModelWithPloidyArgumentCollection(boolean allowDontCheck) {
-        super(allowDontCheck);
+    public HaplotypeModelWithPloidyArgumentCollection(boolean allowCheckOnly) {
+        super(allowCheckOnly);
     }
 
+    /** {@inheritDoc} */
     @Override
     protected VariantHaplotypeConverter haplotypeConverterFromArguments() {
         // parameter checking

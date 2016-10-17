@@ -27,8 +27,6 @@
 
 package org.magicdgs.thaplv.haplotypes.model;
 
-import htsjdk.variant.variantcontext.VariantContext;
-import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.utils.Utils;
 
 /**
@@ -42,7 +40,8 @@ public enum HaplotypeModel {
     INBRED_LINE(new InbredLine(1), new InbredLine(2)),
     HAPLOID(INBRED_LINE.haploid, INBRED_LINE.diploid),
     BACK_CROSS(new BackCross(1), new BackCross(2)),
-    DONT_CHECK(DontCheckHaplotypeConverter.SINGLETON, DontCheckHaplotypeConverter.SINGLETON);
+    CHECK_ONLY(CheckOnlyHaplotypeConverter.getSingleton(),
+            CheckOnlyHaplotypeConverter.getSingleton());
 
     // return haploid haplotypes
     private final VariantHaplotypeConverter haploid;
@@ -60,9 +59,7 @@ public enum HaplotypeModel {
         this.diploid = diploid;
     }
 
-    /**
-     * Get the converter for a variant for this model. Only haploid/diploids are allowed
-     */
+    /** Gets the converter for a variant for this model. Only haploid/diploids are allowed. */
     public static VariantHaplotypeConverter getVariantHaplotypeConverter(
             final HaplotypeModel model, final int ploidy) {
         Utils.nonNull(model, "null model");
@@ -73,28 +70,6 @@ public enum HaplotypeModel {
                 return model.diploid;
             default:
                 throw new IllegalArgumentException("Ploidy of " + ploidy + " is not allowed");
-        }
-    }
-
-    /**
-     * {@link VariantHaplotypeConverter} for don't check genotypes
-     */
-    private static final class DontCheckHaplotypeConverter implements VariantHaplotypeConverter {
-
-        /** Use always the singleton for avoid constructing new objects */
-        private final static DontCheckHaplotypeConverter SINGLETON =
-                new DontCheckHaplotypeConverter();
-
-        @Override
-        public void log(final Logger logger) {
-            logger.info("Genotypes won't be checked for haploid state.");
-            logger.warn("Not checking genotypes is discouraged if the haplotypes were obtained with diploid callers or not converted before.");
-            logger.warn("Most of the tools assume haploid individuals (only the first allele in the Genotypes is considered) and results could be wrong if they are not.");
-        }
-
-        @Override
-        public VariantContext apply(final VariantContext variant) {
-            return variant;
         }
     }
 }

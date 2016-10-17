@@ -80,11 +80,11 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
     @Test
     public void testConvertHaplotypesDontCheckError() throws IOException {
         final IntegrationTestSpec testSpec = new IntegrationTestSpec(
-                " -H DONT_CHECK"
+                " -H CHECK_ONLY"
                         + " -V " + inputVCF
                         + " -O %s",
                 1,
-                UserException.class
+                UserException.BadArgumentValue.class
         );
         testSpec.executeTest("testConvertHaplotypesDontCheckError", this);
     }
@@ -97,7 +97,7 @@ public class ConvertHaplotypesIntegrationTest extends CommandLineProgramTest {
                         + " -V " + inputVCF
                         + " -O %s",
                 1,
-                UserException.class
+                UserException.BadArgumentValue.class
         );
         testSpec.executeTest("testConvertHaplotypesDontCheck", this);
     }
