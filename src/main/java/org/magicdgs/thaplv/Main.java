@@ -28,9 +28,9 @@
 package org.magicdgs.thaplv;
 
 import org.broadinstitute.hellbender.cmdline.CommandLineProgram;
-import org.broadinstitute.hellbender.exceptions.UserException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,46 +38,25 @@ import java.util.List;
  *
  * @author Daniel Gomez-Sanchez
  */
-public class Main {
+public class Main extends org.broadinstitute.hellbender.Main {
 
-    /**
-     * The packages we wish to include in our command line.
-     */
-    protected static List<String> getPackageList() {
+    /** The packages we wish to include in our command line. */
+    @Override
+    protected List<String> getPackageList() {
         final List<String> packageList = new ArrayList<>();
-        // TODO: add some of the bundle tools like IndexFeatureFile
-        // packageList.add("org.broadinstitute.hellbender");
         packageList.add("org.magicdgs.thaplv.tools");
         return packageList;
     }
 
-    /**
-     * Entry point for thaplv.
-     */
-    public static void main(final String[] args) {
-        try {
-            final Object result = new Main().instanceMain(args);
-            if (result != null) {
-                System.out.println("Tool returned:\n" + result);
-            }
-        } catch (final UserException.CommandLineException e) {
-            // the GATK framework already prints the error
-            System.exit(1);
-        } catch (final UserException e) {
-            // this prints the error for user exceptions
-            CommandLineProgram.printDecoratedUserExceptionMessage(System.err, e);
-            System.exit(2);
-        } catch (final Exception e) {
-            e.printStackTrace();
-            System.exit(3);
-        }
+    /** The single classes that we wish to include in our command line. */
+    @Override
+    protected List<Class<? extends CommandLineProgram>> getClassList() {
+        // TODO: add some of the bundle tools like IndexFeatureFile
+        return Collections.emptyList();
     }
 
-    /**
-     * This is a necessary hack for use {@linl CommandLineProgramTest}
-     */
+    /** Override to include our program name in the command line. */
     public Object instanceMain(final String[] args) {
-        return new org.broadinstitute.hellbender.Main()
-                .instanceMain(args, getPackageList(), "thaplv");
+        return instanceMain(args, getPackageList(), getClassList(), "thaplv");
     }
 }

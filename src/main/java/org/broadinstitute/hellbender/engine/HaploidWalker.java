@@ -70,6 +70,17 @@ public abstract class HaploidWalker extends VariantWalker {
      */
     protected abstract boolean allowsCheckOnly();
 
+    // the variant converter for get the haplotypes
+    private VariantHaplotypeConverter converter;
+
+    /** If override, this method should be called anyway for initialize the coverter. */
+    @Override
+    protected String[] customCommandLineValidation() {
+        // get the haplotype model argument collection
+        converter = haplotypeModelArgumentCollection.getHaplotypeConverter();
+        return super.customCommandLineValidation();
+    }
+
     /**
      * Implementation of variant-based traversal. Iterates over the variants, converting to
      * haplotypes using the parameters from {@link #haplotypeModelArgumentCollection} and filtering
@@ -80,9 +91,6 @@ public abstract class HaploidWalker extends VariantWalker {
      */
     @Override
     public final void traverse() {
-        // get the haplotype model argument collection
-        final VariantHaplotypeConverter converter =
-                haplotypeModelArgumentCollection.getHaplotypeConverter();
         converter.log(logger);
         final VariantFilter filter = makeVariantFilter();
         // Process each variant in the input stream.
