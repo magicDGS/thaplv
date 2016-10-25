@@ -158,7 +158,7 @@ public final class LDdecay extends HaploidWalker {
             throw new UserException.BadArgumentValue(CHI_SQR_QUANTILE_ARGNAME,
                     String.valueOf(chiSqrQuantile), "should be in the range (0, 1)");
         }
-        if (minSamples < 1) {
+        if (minSamples != null && minSamples < 1) {
             throw new UserException.BadArgumentValue(MINIMUM_SAMPLES_ARGNAME,
                     String.valueOf(minSamples), "should be a positive integer");
         }
