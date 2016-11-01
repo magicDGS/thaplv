@@ -30,6 +30,7 @@ package org.magicdgs.thaplv.tools;
 import org.magicdgs.thaplv.cmd.programgroups.ConversionProgramGroup;
 import org.magicdgs.thaplv.io.FastaWriter;
 
+import htsjdk.samtools.SAMException;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.util.CloserUtil;
@@ -118,10 +119,10 @@ public final class GetFasta extends HaploidWalker {
         writerMap = new HashMap<>(samples.size());
         for (final String s : samples) {
             final File file = new File(outputPrefix + s + ".fasta");
-            IOUtil.assertFileIsWritable(file);
             try {
+                IOUtil.assertFileIsWritable(file);
                 writerMap.put(s, new FastaWriter(file, sequenceWidth));
-            } catch (FileNotFoundException e) {
+            } catch (FileNotFoundException | SAMException e) {
                 throw new UserException.CouldNotCreateOutputFile(file, e.getMessage(), e);
             }
         }

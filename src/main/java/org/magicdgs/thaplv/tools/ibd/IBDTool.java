@@ -95,11 +95,15 @@ public abstract class IBDTool extends HaploidWalker {
     protected abstract IBDcollector getIBDcollector();
 
     @Override
-    public void onTraversalStart() {
+    protected String[] customCommandLineValidation() {
         // validate teh sliding window arguments
         slidingWindowArgumentCollection.validateArguments();
-        header = getHeaderForVariants();
+        return super.customCommandLineValidation();
+    }
 
+    @Override
+    public void onTraversalStart() {
+        header = getHeaderForVariants();
         output = new IBDOutput(outputPrefix, getIBDcollector(), minimumDifferences, !outputDiff);
     }
 
