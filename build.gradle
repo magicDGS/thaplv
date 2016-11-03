@@ -40,7 +40,7 @@ repositories {
 }
 
 // versions for the dependencies
-final gatkVersion = '4.alpha.2-82-gbc8318e-SNAPSHOT'
+final gatkVersion = '4.alpha.2-86-g0e01083-SNAPSHOT'
 final htsjdkVersion = '2.6.1-9-g88b6719-SNAPSHOT'
 final testngVersion = "6.9.10"
 
