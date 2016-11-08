@@ -79,7 +79,7 @@ public class ImputeKNN extends HaploidWalker {
     }
 
     @Override
-    protected boolean allowsDontCheck() {
+    protected boolean allowsCheckOnly() {
         return true;
     }
 
