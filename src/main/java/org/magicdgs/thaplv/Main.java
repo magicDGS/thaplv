@@ -29,8 +29,10 @@ package org.magicdgs.thaplv;
 
 import org.broadinstitute.hellbender.cmdline.CommandLineProgram;
 import org.broadinstitute.hellbender.exceptions.UserException;
+import org.broadinstitute.hellbender.tools.IndexFeatureFile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,12 +43,13 @@ import java.util.List;
  */
 public class Main extends org.broadinstitute.hellbender.Main {
 
-    // TODO: Override when it is in GATK
+    /** {@inheritDoc} */
+    @Override
     protected String getCommandLineName() {
         return "thaplv";
     }
 
-    /** The packages we wish to include in our command line. */
+    /** {@inheritDoc} */
     @Override
     protected List<String> getPackageList() {
         final List<String> packageList = new ArrayList<>();
@@ -54,48 +57,18 @@ public class Main extends org.broadinstitute.hellbender.Main {
         return packageList;
     }
 
-    /** The single classes that we wish to include in our command line. */
+    /** {@inheritDoc} */
     @Override
     protected List<Class<? extends CommandLineProgram>> getClassList() {
-        // TODO: add some of the bundle tools like IndexFeatureFile
-        return Collections.emptyList();
+        // for the momment, only IndexFeatureFile to index the VCF files is needed
+        return Arrays.asList(
+                IndexFeatureFile.class
+        );
     }
 
     /** Entry point for thaplv. */
     public static void main(final String[] args) {
         new Main().mainEntry(args);
-    }
-
-    /** Entry point for this instance. */
-    protected final void mainEntry(final String[] args) {
-        try {
-            final Object result = instanceMain(args);
-            handleResult(result);
-            System.exit(0);
-        } catch (final UserException.CommandLineException e) {
-            //the usage has already been printed so don't print it here.
-            System.exit(1);
-        } catch (final UserException e) {
-            CommandLineProgram.printDecoratedUserExceptionMessage(System.err, e);
-            System.exit(2);
-        } catch (final Exception e) {
-            e.printStackTrace();
-            System.exit(3);
-        }
-    }
-
-    // TODO: remove when in GATK or include special behaviour
-    protected void handleResult(final Object result) {
-        if (result != null) {
-            System.out.println("Tool returned:\n" + result);
-        }
-    }
-
-    /** Override to include our program name in the command line. */
-    @Override
-    public Object instanceMain(final String[] args) {
-        // TODO: remove this method when it is in GATK
-        return instanceMain(args, getPackageList(), getClassList(), getCommandLineName());
     }
 
 }
