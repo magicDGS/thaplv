@@ -71,6 +71,17 @@ public abstract class HaploidWalker extends VariantWalker {
     protected abstract boolean allowsCheckOnly();
 
     /**
+     * Default implementation validate the haplotype model arguments and calls the super method
+     * afterwards.
+     */
+    @Override
+    protected String[] customCommandLineValidation() {
+        // validate the haplotype model arguments
+        haplotypeModelArgumentCollection.validateArguments();
+        return super.customCommandLineValidation();
+    }
+
+    /**
      * Implementation of variant-based traversal. Iterates over the variants, converting to
      * haplotypes using the parameters from {@link #haplotypeModelArgumentCollection} and filtering
      * afterwards by {@link #makeVariantFilter()}.

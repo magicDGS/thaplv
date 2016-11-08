@@ -137,8 +137,6 @@ public final class LDdecay extends HaploidWalker {
             minSamples = Math.min(minSamples, nSamples);
         }
 
-        // validate the arguments
-        validateArgs();
         lengthBinningArgumentCollection.logWarnings(logger);
 
         // warnings
@@ -154,16 +152,18 @@ public final class LDdecay extends HaploidWalker {
                 chiSqrQuantile, multiThreadArgumentCollection);
     }
 
-    private void validateArgs() {
+    /** Overrides to validate the arguments. */
+    protected String[] customCommandLineValidation() {
         if (chiSqrQuantile < 0 || chiSqrQuantile >= 1) {
             throw new UserException.BadArgumentValue(CHI_SQR_QUANTILE_ARGNAME,
                     String.valueOf(chiSqrQuantile), "should be in the range (0, 1)");
         }
-        if (minSamples < 1) {
+        if (minSamples != null && minSamples < 1) {
             throw new UserException.BadArgumentValue(MINIMUM_SAMPLES_ARGNAME,
                     String.valueOf(minSamples), "should be a positive integer");
         }
         lengthBinningArgumentCollection.validateArgs();
+        return super.customCommandLineValidation();
     }
 
     @Override

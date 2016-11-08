@@ -62,12 +62,22 @@ public abstract class HaplotypeModelArgumentCollection implements ArgumentCollec
      * Gets the {@link VariantHaplotypeConverter} from the tool, checking for correct parameters.
      */
     public final VariantHaplotypeConverter getHaplotypeConverter() {
+        validateArguments();
+        return haplotypeConverterFromArguments();
+    }
+
+    /**
+     * Validates the arguments provided by the command line. Implementors should call super to
+     * include default checks.
+     *
+     * @throws UserException.BadArgumentValue if the arguments are invalid.
+     */
+    public void validateArguments() {
         if (!allowCheckOnly && haplotypeModel == HaplotypeModel.CHECK_ONLY) {
             throw new UserException.BadArgumentValue(ThaplvArgumentDefinitions.HAPLOTYPE_MODEL_LONG,
                     haplotypeModel.toString(),
                     "is not allowed in this tool.");
         }
-        return haplotypeConverterFromArguments();
     }
 
     /**

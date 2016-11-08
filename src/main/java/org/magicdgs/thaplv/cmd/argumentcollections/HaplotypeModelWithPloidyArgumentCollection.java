@@ -56,13 +56,20 @@ public class HaplotypeModelWithPloidyArgumentCollection extends HaplotypeModelAr
 
     /** {@inheritDoc} */
     @Override
-    protected VariantHaplotypeConverter haplotypeConverterFromArguments() {
+    public void validateArguments() {
+        super.validateArguments();
         // parameter checking
         if (ploidy < 1 || ploidy > 2) {
             throw new UserException.BadArgumentValue(ThaplvArgumentDefinitions.OUTPUT_PLOIDY_LONG,
                     String.valueOf(ploidy),
                     "only haploid/diploid calls are handled.");
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected VariantHaplotypeConverter haplotypeConverterFromArguments() {
         return HaplotypeModel.getVariantHaplotypeConverter(haplotypeModel, ploidy);
     }
+
 }

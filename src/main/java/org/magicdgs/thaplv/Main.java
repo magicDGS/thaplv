@@ -28,9 +28,10 @@
 package org.magicdgs.thaplv;
 
 import org.broadinstitute.hellbender.cmdline.CommandLineProgram;
-import org.broadinstitute.hellbender.exceptions.UserException;
+import org.broadinstitute.hellbender.tools.IndexFeatureFile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,46 +39,34 @@ import java.util.List;
  *
  * @author Daniel Gomez-Sanchez
  */
-public class Main {
+public class Main extends org.broadinstitute.hellbender.Main {
 
-    /**
-     * The packages we wish to include in our command line.
-     */
-    protected static List<String> getPackageList() {
+    /** {@inheritDoc} */
+    @Override
+    protected String getCommandLineName() {
+        return "thaplv";
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected List<String> getPackageList() {
         final List<String> packageList = new ArrayList<>();
-        // TODO: add some of the bundle tools like IndexFeatureFile
-        // packageList.add("org.broadinstitute.hellbender");
         packageList.add("org.magicdgs.thaplv.tools");
         return packageList;
     }
 
-    /**
-     * Entry point for thaplv.
-     */
-    public static void main(final String[] args) {
-        try {
-            final Object result = new Main().instanceMain(args);
-            if (result != null) {
-                System.out.println("Tool returned:\n" + result);
-            }
-        } catch (final UserException.CommandLineException e) {
-            // the GATK framework already prints the error
-            System.exit(1);
-        } catch (final UserException e) {
-            // this prints the error for user exceptions
-            CommandLineProgram.printDecoratedUserExceptionMessage(System.err, e);
-            System.exit(2);
-        } catch (final Exception e) {
-            e.printStackTrace();
-            System.exit(3);
-        }
+    /** {@inheritDoc} */
+    @Override
+    protected List<Class<? extends CommandLineProgram>> getClassList() {
+        // for the momment, only IndexFeatureFile to index the VCF files is needed
+        return Arrays.asList(
+                IndexFeatureFile.class
+        );
     }
 
-    /**
-     * This is a necessary hack for use {@linl CommandLineProgramTest}
-     */
-    public Object instanceMain(final String[] args) {
-        return new org.broadinstitute.hellbender.Main()
-                .instanceMain(args, getPackageList(), "thaplv");
+    /** Entry point for thaplv. */
+    public static void main(final String[] args) {
+        new Main().mainEntry(args);
     }
+
 }
