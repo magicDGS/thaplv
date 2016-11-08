@@ -96,12 +96,8 @@ public abstract class HaploidWalker extends VariantWalker {
                 haplotypeModelArgumentCollection.getHaplotypeConverter();
         converter.log(logger);
         final VariantFilter filter = makeVariantFilter();
-        // Process each variant in the input stream.
-        // ecause drivingVariants are private, we need to have the iterator here
-        // TODO: contribute to GATK4 to get access to the drivingVariants
-        final Iterable<VariantContext> iterator = ()
-                -> features.getFeatureIterator(getDrivingVariantsFeatureInput());
-        StreamSupport.stream(iterator.spliterator(), false)
+        // process each variant in the input stream.
+        StreamSupport.stream(getSpliteratorForDrivingVariants(), false)
                 .map(converter) // converting to haplotypes
                 .filter(filter)
                 .forEach(variant -> {
